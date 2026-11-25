@@ -141,6 +141,11 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
 .err{color:var(--crit);font-size:.85rem;min-height:1.2em}
 .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:500;font-size:.85rem;padding:4px}
 .plus{color:var(--ok)}
+.fixes{display:flex;flex-direction:column}
+.fx{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.fx .t{flex:1 1 180px;min-width:0;display:flex;flex-direction:column}
+.fx .a{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.fx .a input{width:120px;text-align:right}
 .empty{padding:18px;text-align:center;color:var(--muted);font-size:.9rem;border:1px dashed var(--line);border-radius:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -328,7 +333,16 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
     <div class="grid">
       <div class="stack">
         <div class="panel">
-          <header><h2>Noter un mouvement</h2></header>
+          <header><h2>Plan de <span id="pl-mois"></span></h2><span class="muted small" id="pl-jours"></span></header>
+          <div class="kpis" id="pl-kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+          <p class="note" id="pl-jour" style="margin-top:12px"></p>
+          <h3 style="margin:18px 0 6px">Charges fixes : cochez quand c'est payé</h3>
+          <div id="pl-fixes" class="fixes"></div>
+          <h3 style="margin:18px 0 6px">Dépenses courantes : ce qui reste dans chaque enveloppe</h3>
+          <div class="tbl"><table id="pl-var"></table></div>
+        </div>
+        <div class="panel">
+          <header><h2>Noter une dépense ou une recette</h2></header>
           <form class="f" id="f-j">
             <div class="fld full"><label>Type</label><div class="seg"><label><input type="radio" name="j-type" value="depense" checked> Dépense</label><label><input type="radio" name="j-type" value="recette"> Recette</label></div></div>
             <div class="fld full"><label for="j-label">Libellé</label><input id="j-label" required placeholder="Courses, carburant, cadeau…"></div>
@@ -421,7 +435,7 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
 const CATS={dette:"Remboursement de dettes",logement:"Logement",famille:"Soutien familial",epargne:"Assurances & épargne",eglise:"Église & dîme",courant:"Vie courante",abonnements:"Abonnements IA, internet, TV",autre:"Autres charges"};
 const CATCOL={dette:"--c5",logement:"--c4",famille:"--c3",epargne:"--c6",eglise:"--c2",courant:"--c7",abonnements:"--c9",autre:"--c8"};
 const SBCATS={alimentation:"Courses & alimentation",transport:"Carburant & transport",sorties:"Restaurants & sorties",maison:"Maison & personnel",divers:"Divers & dons ponctuels"};
-const JCATS=Object.assign({},SBCATS,{abonnements:"Abonnements",famille:"Famille (hors envoi fixe)",sante:"Santé",projet:"Projet Abidjan",autre:"Autre imprévu"});
+const JCATS=Object.assign({},SBCATS,{famille:"Famille (hors envoi fixe)",sante:"Santé",projet:"Projet Abidjan",autre:"Autre imprévu"});
 const RCATS={formation:"Formation",actuariat:"Mission d'actuariat",prime:"Prime ou bonus",autre_r:"Autre recette"};
 const SB_DEFAULT={alimentation:130,transport:75,sorties:50,maison:70,divers:25};
 const W2M=52/12;
@@ -514,6 +528,8 @@ function alertes(c){
   // journal
   const jm=journalMois(c);
   jm.postes.forEach(p=>{if(p.budget>0&&p.spent>p.budget)A.unshift({s:"crit",t:"Budget « "+p.label+" » dépassé",p:"Dépensé "+usd(p.spent)+" pour "+usd(p.budget)+" prévus ce mois."});else if(p.budget>0&&p.spent>p.budget*0.8)A.unshift({s:"warn",t:"« "+p.label+" » à "+pct(p.spent/p.budget),p:"Il reste "+usd(p.budget-p.spent)+" sur ce poste pour le mois."});});
+  const pl=planMois(c,jm);
+  if(pl.nonPayees)A.unshift({s:"info",t:"Reste à payer ce mois : "+usd(pl.reste),p:pl.nonPayees+" charge"+(pl.nonPayees>1?"s fixes":" fixe")+" pas encore réglée"+(pl.nonPayees>1?"s":"")+" ("+usd(pl.resteFixes)+") et "+usd(pl.resteVar)+" encore disponibles pour la vie courante. Détail dans Dépenses & recettes."});
   if(jm.rec>0)A.unshift({s:"ok",t:"Recettes en plus ce mois : "+usd(jm.rec),p:"Mon conseil : placez au moins la moitié ("+usd(jm.rec/2)+") sur vos projets avant qu'elle ne se dilue dans le quotidien"+(S.dimePct>0?", et prévoyez la dîme ("+usd(jm.rec*S.dimePct/100)+")":"")+"."});
   if(jm.hors>0){const base=Math.max(c.marge,0)+jm.rec;const r=base>0?jm.hors/base:1;A.unshift({s:r>1?"crit":r>0.5?"warn":"info",t:"Imprévus du mois : "+usd(jm.hors),p:r>1?"Ils dépassent votre marge libre : l'objectif d'épargne de ce mois ne sera pas atteint.":"Ils consomment "+pct(Math.min(r,1))+" de votre marge libre"+(jm.rec?" augmentée des recettes":"")+" ("+usd(base)+")."});}
   return A;
@@ -523,13 +539,24 @@ function journalMois(c){
   const m=curMonth();const all=J.filter(e=>(e.date||"").slice(0,7)===m);
   const items=all.filter(e=>e.type!=="recette");const recettes=all.filter(e=>e.type==="recette");
   const rec=recettes.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);
-  const budgets={abonnements:c.byCat.abonnements};
+  const budgets={};
   Object.keys(SBCATS).forEach(k=>budgets[k]=(+S.sousBudget[k]||0)*W2M);
-  const sp={};items.forEach(e=>{const k=(e.cat==="courant"||e.cat==="loisirs")?(e.cat==="loisirs"?"sorties":"divers"):e.cat;sp[k]=(sp[k]||0)+toUSD(e.montant,e.devise);});
+  const sp={};items.forEach(e=>{if(e.cat==="fixe"||e.cat==="abonnements")return;const k=(e.cat==="courant"||e.cat==="loisirs")?(e.cat==="loisirs"?"sorties":"divers"):e.cat;sp[k]=(sp[k]||0)+toUSD(e.montant,e.devise);});
   const postes=Object.keys(JCATS).map(k=>({k,label:JCATS[k],budget:budgets[k]||0,spent:sp[k]||0}));
   const hors=postes.filter(p=>!p.budget).reduce((a,p)=>a+p.spent,0);
   const total=items.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);
   return{items,all,recettes,rec,postes,hors,total};
+}
+function planMois(c,jm){
+  const fixes=S.charges.filter(ch=>ch.cat!=="courant").map(ch=>({id:ch.id,label:ch.label,montant:+ch.montant||0,devise:ch.devise,prevuU:toUSD(ch.montant,ch.devise)}));
+  if(c.dime>0)fixes.push({id:"dime",label:"Dîme ("+S.dimePct+" %)",montant:Math.round(c.dime),devise:"USD",prevuU:c.dime});
+  fixes.forEach(f=>{f.paid=jm.items.filter(e=>e.cat==="fixe"&&e.chargeId===f.id);f.paidU=f.paid.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);});
+  const vars=Object.keys(SBCATS).map(k=>{const p=jm.postes.find(x=>x.k===k);return{k,label:SBCATS[k],budget:p.budget,spent:p.spent,reste:p.budget-p.spent};});
+  const prevu=fixes.reduce((a,f)=>a+f.prevuU,0)+vars.reduce((a,v)=>a+v.budget,0);
+  const resteFixes=fixes.filter(f=>!f.paid.length).reduce((a,f)=>a+f.prevuU,0);
+  const resteVar=vars.reduce((a,v)=>a+Math.max(0,v.reste),0);
+  const now=new Date();const dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();const jours=dim-now.getDate()+1;
+  return{fixes,vars,prevu,resteFixes,resteVar,reste:resteFixes+resteVar,depense:jm.total,jours,nonPayees:fixes.filter(f=>!f.paid.length).length};
 }
 
 // ---------- projets ----------
@@ -704,10 +731,23 @@ function renderProjets(c){
 
 function renderJournal(c){
   const jm=journalMois(c);
+  const pl=planMois(c,jm);
+  $("pl-mois").textContent=moisNom(new Date());
+  $("pl-jours").textContent=pl.jours+" jour"+(pl.jours>1?"s":"")+" restant"+(pl.jours>1?"s":"");
+  $("pl-kpis").innerHTML=[{l:"Prévu ce mois",v:usd(pl.prevu)},{l:"Déjà dépensé",v:usd(pl.depense)},{l:"Reste à dépenser",v:usd(pl.reste),hl:1}].map(x=>'<div class="kpi'+(x.hl?' hl':'')+'"><span class="lbl">'+x.l+'</span><span class="v">'+x.v+'</span></div>').join("");
+  $("pl-jour").textContent=pl.resteVar>0?"Pour la vie courante, il vous reste "+usd(pl.resteVar)+", soit "+usd(pl.resteVar/pl.jours)+" par jour jusqu'à la fin du mois.":"Les enveloppes de vie courante sont vides pour ce mois : toute nouvelle dépense est prise sur votre marge.";
+  const fm=(m,d)=>d==="XOF"?xof(m):usd(m);
+  $("pl-fixes").innerHTML=pl.fixes.map(f=>{
+    const head='<div class="t"><span>'+esc(f.label)+'</span><span class="small muted num">Prévu '+fm(f.montant,f.devise)+'</span></div>';
+    if(f.paid.length){const e=f.paid[f.paid.length-1];return '<div class="fx">'+head+'<div class="a"><span class="chip ok">Payé le '+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+(Math.abs(f.paidU-f.prevuU)>0.5?" · "+fm(f.paid.reduce((x,y)=>x+(+y.montant||0),0),e.devise):"")+'</span><button class="ghost" data-unpay="'+esc(f.paid.map(x=>x.id).join(","))+'">Annuler</button></div></div>';}
+    return '<div class="fx">'+head+'<div class="a"><input type="number" min="0" step="any" data-amt="'+esc(f.id)+'" value="'+f.montant+'" aria-label="Montant payé pour '+esc(f.label)+'"><button data-pay="'+esc(f.id)+'">Payé</button></div></div>';}).join("")+
+    '<div class="row tot" style="margin-top:4px"><span>Reste à payer</span><span class="num">'+usd(pl.resteFixes)+'</span></div>';
+  $("pl-var").innerHTML='<tr><th>Enveloppe</th><th class="r">Prévu</th><th class="r">Dépensé</th><th class="r">Reste</th></tr>'+pl.vars.map(v=>'<tr><td>'+esc(v.label)+'</td><td class="r num">'+usd(v.budget)+'</td><td class="r num">'+usd(v.spent)+'</td><td class="r num" style="color:var('+(v.reste<0?'--crit':v.reste<v.budget*0.2?'--warn':'--ok')+')">'+(v.reste<0?"− "+usd(-v.reste):usd(v.reste))+'</td></tr>').join("")+
+    '<tr><td><b>Total</b></td><td class="r num"><b>'+usd(pl.vars.reduce((a,v)=>a+v.budget,0))+'</b></td><td class="r num"><b>'+usd(pl.vars.reduce((a,v)=>a+v.spent,0))+'</b></td><td class="r num"><b>'+usd(pl.resteVar)+'</b></td></tr>';
   $("j-mois").textContent=moisNom(new Date());
   $("j-total").textContent=jm.all.length?"Dépenses "+usd(jm.total)+(jm.rec?" · Recettes "+usd(jm.rec):""):"";
   if(!jm.all.length)$("j-list").innerHTML='<p class="empty">Rien de noté ce mois. Ajoutez une dépense ou une recette avec le formulaire ci-dessus : chaque dépense est comparée à votre budget et déclenche une alerte à 80 % puis à 100 %.</p>';
-  else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc((r?RCATS[e.cat]:JCATS[e.cat])||e.cat)+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+(e.devise==="XOF"?xof(+e.montant):usd(+e.montant))+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
+  else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc((r?RCATS[e.cat]:(e.cat==="fixe"?"Charge fixe":JCATS[e.cat]))||e.cat)+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+(e.devise==="XOF"?xof(+e.montant):usd(+e.montant))+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
   $("j-budget").innerHTML=jm.postes.filter(p=>p.budget||p.spent).map(p=>{const r=p.budget?p.spent/p.budget:null;const st=r===null?"warn":r>1?"crit":r>0.8?"warn":"";
     return '<div class="stack" style="gap:4px"><div class="row"><span>'+esc(p.label)+'</span><span class="num">'+usd(p.spent)+(p.budget?" / "+usd(p.budget):"")+'</span></div>'+(p.budget?'<div class="prog '+st+'"><span style="width:'+Math.min(100,r*100)+'%"></span></div>':'<p class="small muted">Hors budget : pris sur la marge libre</p>')+'</div>';}).join("")+
     '<div class="row"><span>Recettes ponctuelles</span><span class="num plus">+ '+usd(jm.rec)+'</span></div><div class="row tot"><span>Imprévus vs marge libre'+(jm.rec?" + recettes":"")+'</span><span class="num">'+usd(jm.hors)+" / "+usd(Math.max(c.marge,0)+jm.rec)+'</span></div>';
@@ -926,6 +966,13 @@ function bindJournal(){
     const it={type:document.querySelector('input[name="j-type"]:checked').value,label:$("j-label").value.trim(),montant:+$("j-montant").value||0,devise:$("j-devise").value,cat:$("j-cat").value,date:$("j-date").value};
     $("j-label").value="";$("j-montant").value="";
     try{await backend.addJ(await pack(it));}catch(err){setSave("Échec de l'enregistrement");}});
+  $("pl-fixes").addEventListener("click",async e=>{
+    const pb=e.target.closest("[data-pay]");const ub=e.target.closest("[data-unpay]");if(locked())return;
+    if(pb){const id=pb.dataset.pay;const c=calc();const f=planMois(c,journalMois(c)).fixes.find(x=>x.id===id);if(!f)return;
+      const inp=document.querySelector('[data-amt="'+CSS.escape(id)+'"]');const m=inp?(+inp.value||0):f.montant;pb.disabled=true;
+      try{await backend.addJ(await pack({type:"depense",cat:"fixe",chargeId:id,label:f.label,montant:m,devise:f.devise,date:new Date().toISOString().slice(0,10)}));}catch(err){setSave("Échec de l'enregistrement");pb.disabled=false;}}
+    if(ub){for(const id of ub.dataset.unpay.split(","))try{await backend.delJ(id);}catch(err){}}
+  });
   $("j-list").addEventListener("click",async e=>{const b=e.target.closest("[data-del-j]");if(!b)return;try{await backend.delJ(b.dataset.delJ);}catch(err){setSave("Échec de la suppression");}});
 }
 let lastEval=null;
