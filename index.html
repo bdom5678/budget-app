@@ -146,6 +146,12 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
 .fx .t{flex:1 1 180px;min-width:0;display:flex;flex-direction:column}
 .fx .a{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .fx .a input{width:120px;text-align:right}
+.scan-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 10px}
+label.btn{display:inline-flex;align-items:center;font-weight:600;border-radius:7px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem}
+label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.scan{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;padding:14px;margin-bottom:12px;border:1px solid var(--accent);border-radius:8px;background:var(--sunk)}
+.scan img{width:120px;max-height:200px;object-fit:cover;border-radius:6px;background:var(--bg)}
+@media (max-width:520px){.scan{grid-template-columns:minmax(0,1fr)}.scan img{width:100%;max-height:160px}}
 .empty{padding:18px;text-align:center;color:var(--muted);font-size:.9rem;border:1px dashed var(--line);border-radius:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -340,7 +346,26 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
           <div id="pl-fixes" class="fixes"></div>
           <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px;margin:18px 0 6px">
             <h3>Dépenses courantes : tapez chaque dépense dans son poste</h3>
-            <div class="fld" style="flex:0 0 auto"><label for="pl-dev">Montants saisis en</label><select id="pl-dev" style="width:auto"><option value="USD">USD</option><option value="XOF">F CFA</option></select></div>
+            <div class="fld" style="flex:0 0 auto"><label for="pl-dev">Montants saisis en</label><select id="pl-dev" style="width:auto"><option value="USD">USD</option><option value="CDF">FC</option><option value="XOF">F CFA</option></select></div>
+          </div>
+          <div class="scan-bar">
+            <label class="btn pri" for="scan-file">Photographier un ticket</label>
+            <input id="scan-file" type="file" accept="image/*" capture="environment" hidden>
+            <span class="small muted" id="scan-engine"></span>
+          </div>
+          <div id="scan-card" class="scan" hidden>
+            <img id="scan-img" alt="Photo du ticket">
+            <div class="stack" style="gap:10px;min-width:0">
+              <p id="scan-status" class="small" aria-live="polite"></p>
+              <form class="f" id="f-scan">
+                <div class="fld"><label for="sc-montant">Montant</label><input id="sc-montant" type="number" min="0" step="any" required></div>
+                <div class="fld"><label for="sc-devise">Devise</label><select id="sc-devise"><option value="USD">USD</option><option value="CDF">FC</option><option value="XOF">F CFA</option></select></div>
+                <div class="fld"><label for="sc-poste">Poste</label><select id="sc-poste"></select></div>
+                <div class="fld"><label for="sc-date">Date</label><input id="sc-date" type="date" required></div>
+                <div class="fld full"><label for="sc-label">Libellé</label><input id="sc-label" required></div>
+                <div class="actions"><button class="pri" type="submit" id="sc-ok">Valider la dépense</button><button type="button" id="sc-cancel">Annuler</button></div>
+              </form>
+            </div>
           </div>
           <div id="pl-var" class="fixes"></div>
         </div>
@@ -358,7 +383,7 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
           <form class="f" id="f-j">
             <div class="fld full"><label for="j-label">Libellé</label><input id="j-label" required placeholder="Courses, carburant, cadeau…"></div>
             <div class="fld"><label for="j-montant">Montant</label><input id="j-montant" type="number" min="0" step="any" required></div>
-            <div class="fld"><label for="j-devise">Devise</label><select id="j-devise"><option value="USD">USD</option><option value="XOF">F CFA</option></select></div>
+            <div class="fld"><label for="j-devise">Devise</label><select id="j-devise"><option value="USD">USD</option><option value="CDF">FC</option><option value="XOF">F CFA</option></select></div>
             <div class="fld"><label for="j-cat" id="j-cat-l">Source</label><select id="j-cat"></select></div>
             <div class="fld"><label for="j-date">Date</label><input id="j-date" type="date" required></div>
             <div class="actions"><button class="pri" type="submit">Ajouter la recette</button></div>
@@ -404,6 +429,14 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
         </div>
         <p class="err" id="l-msg" aria-live="polite" style="margin-top:8px"></p>
       </div>
+      <div class="panel" id="ia-panel" hidden>
+        <header><h2>Lecture des tickets</h2><span class="chip" id="ia-chip"></span></header>
+        <p class="small muted" style="margin-bottom:10px">Par défaut, la photo est lue <b>sur votre téléphone</b> : elle ne quitte jamais l'appareil, mais la lecture est moins fiable (vérifiez le montant). Pour une lecture plus précise et un classement intelligent, vous pouvez coller une clé API Anthropic (console.anthropic.com). La photo du ticket est alors envoyée à Anthropic pour être lue, et chaque lecture coûte environ un centime de dollar. La clé reste sur ce téléphone, chiffrée si le mot de passe est actif, et n'est jamais incluse dans les sauvegardes.</p>
+        <form class="f" id="f-ia" onsubmit="return false">
+          <div class="fld full"><label for="ia-key">Clé API (facultatif)</label><input id="ia-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"></div>
+          <div class="actions"><button type="button" id="ia-save">Enregistrer la clé</button><button type="button" id="ia-del">Retirer la clé</button></div>
+        </form>
+      </div>
       <div class="panel">
         <header><h2>Sauvegarde et transfert</h2></header>
         <p class="small muted" style="margin-bottom:12px">Copiez vos données pour les transférer vers l'application du téléphone, ou gardez-en une copie. Si un mot de passe est actif, la copie est chiffrée avec lui.</p>
@@ -420,6 +453,7 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
         <header><h2>Réglages</h2></header>
         <form class="f" id="f-set" onsubmit="return false">
           <div class="fld"><label for="s-taux">Taux : 1 USD en F CFA</label><input id="s-taux" type="number" min="1" step="1"></div>
+          <div class="fld"><label for="s-tauxcdf">Taux : 1 USD en francs congolais (FC)</label><input id="s-tauxcdf" type="number" min="1" step="1"></div>
           <div class="fld"><label for="s-dime">Dîme (% des revenus)</label><input id="s-dime" type="number" min="0" max="100" step="0.5"></div>
           <div class="fld"><label for="s-dimebase">Dîme calculée sur</label><select id="s-dimebase"><option value="total">Tous les revenus</option><option value="kin">Revenus de Kinshasa seulement</option></select></div>
           <div class="fld"><label for="s-dimelieu">Dîme payée depuis</label><select id="s-dimelieu"><option value="kin">Kinshasa</option><option value="abj">Abidjan</option></select></div>
@@ -489,7 +523,8 @@ const nf1=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:1});
 const usd=v=>nf0.format(Math.round(v))+" USD";
 const xof=v=>nf0.format(Math.round(v/1000)*1000)+" F CFA";
 const pct=v=>nf1.format(v*100)+" %";
-const toUSD=(m,d)=>d==="XOF"?(+m||0)/S.taux:(+m||0);
+const toUSD=(m,d)=>d==="XOF"?(+m||0)/S.taux:d==="CDF"?(+m||0)/(+S.tauxCDF||2800):(+m||0);
+const fmtDev=(m,d)=>d==="XOF"?xof(m):d==="CDF"?nf0.format(Math.round(m))+" FC":usd(m);
 const both=v=>usd(v)+" · "+xof(v*S.taux);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
@@ -754,7 +789,7 @@ function renderJournal(c){
   $("pl-jours").textContent=pl.jours+" jour"+(pl.jours>1?"s":"")+" restant"+(pl.jours>1?"s":"");
   $("pl-kpis").innerHTML=[{l:"Prévu ce mois",v:usd(pl.prevu)},{l:"Déjà dépensé",v:usd(pl.depense)},{l:"Reste à dépenser",v:usd(pl.reste),hl:1}].map(x=>'<div class="kpi'+(x.hl?' hl':'')+'"><span class="lbl">'+x.l+'</span><span class="v">'+x.v+'</span></div>').join("");
   $("pl-jour").textContent=pl.resteVar>0?"Pour la vie courante, il vous reste "+usd(pl.resteVar)+", soit "+usd(pl.resteVar/pl.jours)+" par jour jusqu'à la fin du mois.":"Les enveloppes de vie courante sont vides pour ce mois : toute nouvelle dépense est prise sur votre marge.";
-  const fm=(m,d)=>d==="XOF"?xof(m):usd(m);
+  const fm=fmtDev;
   $("pl-fixes").innerHTML=pl.fixes.map(f=>{
     const head='<div class="t"><span>'+esc(f.label)+'</span><span class="small muted num">Prévu '+fm(f.montant,f.devise)+'</span></div>';
     if(f.paid.length){const e=f.paid[f.paid.length-1];return '<div class="fx">'+head+'<div class="a"><span class="chip ok">Payé le '+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+(Math.abs(f.paidU-f.prevuU)>0.5?" · "+fm(f.paid.reduce((x,y)=>x+(+y.montant||0),0),e.devise):"")+'</span><button class="ghost" data-unpay="'+esc(f.paid.map(x=>x.id).join(","))+'">Annuler</button></div></div>';}
@@ -764,21 +799,21 @@ function renderJournal(c){
   $("pl-var").innerHTML=pl.vars.map(v=>{const col=v.reste<0?'--crit':v.budget&&v.reste<v.budget*0.2?'--warn':'--ok';
     return '<div class="fx"><div class="t"><span>'+esc(v.label)+'</span><span class="small muted num">'+(v.budget?"Prévu "+usd(v.budget)+" · ":"")+'Dépensé '+usd(v.spent)+'</span></div>'+
     '<div class="a"><span class="num" style="font-weight:600;color:var('+col+')">'+(v.budget?(v.reste<0?"Dépassé de "+usd(-v.reste):"Reste "+usd(v.reste)):"Sans budget")+'</span></div>'+
-    '<div class="a" style="flex-basis:100%"><input type="number" min="0" step="any" inputmode="decimal" data-add="'+esc(v.k)+'" placeholder="Montant en '+(dev==="XOF"?"F CFA":"USD")+'" aria-label="Nouvelle dépense pour '+esc(v.label)+'" style="width:auto;flex:1 1 140px"><button data-addbtn="'+esc(v.k)+'">Déduire</button>'+
+    '<div class="a" style="flex-basis:100%"><input type="number" min="0" step="any" inputmode="decimal" data-add="'+esc(v.k)+'" placeholder="Montant en '+(dev==="XOF"?"F CFA":dev==="CDF"?"FC":"USD")+'" aria-label="Nouvelle dépense pour '+esc(v.label)+'" style="width:auto;flex:1 1 140px"><button data-addbtn="'+esc(v.k)+'">Déduire</button>'+
     (v.spent>0?'<button class="ghost" data-undo="'+esc(v.k)+'">Annuler la dernière</button>':'')+(v.perso?'<button class="ghost" data-delpp="'+esc(v.k.slice(3))+'">Supprimer le poste</button>':'')+'</div></div>';}).join("")+
     (pl.autres.length?'<div class="fx"><div class="t"><span>Autres dépenses notées</span><span class="small muted">'+esc(pl.autres.map(a=>a.label).join(", "))+'</span></div><div class="a"><span class="num">'+usd(pl.autres.reduce((x,a)=>x+a.spent,0))+'</span></div></div>':'')+
     '<div class="row tot" style="margin-top:4px"><span>Reste dans les enveloppes</span><span class="num">'+usd(pl.resteVar)+'</span></div>';
   $("j-mois").textContent=moisNom(new Date());
   $("j-total").textContent=jm.all.length?"Dépenses "+usd(jm.total)+(jm.rec?" · Recettes "+usd(jm.rec):""):"";
   if(!jm.all.length)$("j-list").innerHTML='<p class="empty">Rien de noté ce mois. Ajoutez une dépense ou une recette avec le formulaire ci-dessus : chaque dépense est comparée à votre budget et déclenche une alerte à 80 % puis à 100 %.</p>';
-  else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc(r?(RCATS[e.cat]||e.cat):catLabel(e.cat))+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+(e.devise==="XOF"?xof(+e.montant):usd(+e.montant))+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
+  else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc(r?(RCATS[e.cat]||e.cat):catLabel(e.cat))+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+fmtDev(+e.montant,e.devise)+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
   $("j-budget").innerHTML=jm.postes.filter(p=>p.budget||p.spent).map(p=>{const r=p.budget?p.spent/p.budget:null;const st=r===null?"warn":r>1?"crit":r>0.8?"warn":"";
     return '<div class="stack" style="gap:4px"><div class="row"><span>'+esc(p.label)+'</span><span class="num">'+usd(p.spent)+(p.budget?" / "+usd(p.budget):"")+'</span></div>'+(p.budget?'<div class="prog '+st+'"><span style="width:'+Math.min(100,r*100)+'%"></span></div>':'<p class="small muted">Hors budget : pris sur la marge libre</p>')+'</div>';}).join("")+
     '<div class="row"><span>Recettes ponctuelles</span><span class="num plus">+ '+usd(jm.rec)+'</span></div><div class="row tot"><span>Imprévus vs marge libre'+(jm.rec?" + recettes":"")+'</span><span class="num">'+usd(jm.hors)+" / "+usd(Math.max(c.marge,0)+jm.rec)+'</span></div>';
 }
 
 function renderSettings(){
-  [["s-taux","taux"],["s-dime","dimePct"],["s-dimebase","dimeBase"],["s-dimelieu","dimeLieu"]].forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=S[k];});
+  [["s-taux","taux"],["s-tauxcdf","tauxCDF"],["s-dime","dimePct"],["s-dimebase","dimeBase"],["s-dimelieu","dimeLieu"]].forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=S[k];});
   const sel=(opts,v,attr)=>'<select '+attr+'>'+Object.entries(opts).map(([k,l])=>'<option value="'+k+'"'+(k===v?" selected":"")+'>'+esc(l)+'</option>').join("")+'</select>';
   const rowRev=r=>'<tr data-id="'+esc(r.id)+'"><td><input data-k="label" value="'+esc(r.label)+'" aria-label="Libellé"></td><td><input data-k="montant" type="number" step="any" value="'+esc(r.montant)+'" aria-label="Montant" style="min-width:110px"></td><td>'+sel({USD:"USD",XOF:"F CFA"},r.devise,'data-k="devise" aria-label="Devise"')+'</td><td>'+sel(LIEUX,r.lieu,'data-k="lieu" aria-label="Lieu"')+'</td>';
   $("t-rev").innerHTML='<tr><th>Libellé</th><th>Montant</th><th>Devise</th><th>Versé à</th><th></th></tr>'+S.revenus.map(r=>rowRev(r)+'<td><button class="ghost" data-del="rev">Supprimer</button></td></tr>').join("");
@@ -902,9 +937,119 @@ function bindLock(){
   document.addEventListener("visibilitychange",()=>{if(document.hidden)hiddenAt=Date.now();else if(LOCK&&KEY&&hiddenAt&&Date.now()-hiddenAt>60000)lockNow();});
   setInterval(()=>{if(LOCK&&KEY&&Date.now()-lastAct>5*60000)lockNow();},15000);
 }
+// ---------- photo de ticket ----------
+const OCR_BASE="ocr/";
+const KW=[["transport",/(station|carbur|essence|gas ?oil|gazole|diesel|engen|totalenergies|cobil|sep congo|petro|litres?\b|parking|taxi|uber|yango|péage|peage)/i],
+  ["sorties",/(restaurant|resto|brasserie|bar\b|lounge|caf[eé]|pizz|grill|burger|snack|boisson|bi[eè]re|maquis|traiteur|cinema|cinéma)/i],
+  ["maison",/(quincaill|snel|regideso|cie\b|sodeci|[eé]lectricit|eau\b|gaz\b|menage|ménage|pressing|blanchiss|plomb|bricol|meuble|electrom)/i],
+  ["pp:sant",/(pharma|clinique|h[oô]pital|m[eé]dic|laborat|docteur|optique)/i],
+  ["alimentation",/(supermarch|march[eé]|hypermarch|city ?market|kin ?march|hasson|peloustore|regal|carrefour|prosuma|leader ?price|super ?u|casino|sococe|boulang|patiss|boucher|alimenta|[eé]picerie|shop|store|mart\b)/i]];
+function guessPoste(text){
+  for(const [k,re] of KW){if(!re.test(text))continue;
+    if(k.startsWith("pp:")){const pp=(S.postesPerso||[]).find(x=>x.label.toLowerCase().includes(k.slice(3)));if(pp)return "pp_"+pp.id;continue;}
+    return k;}
+  return "divers";
+}
+function parseNum(str){
+  const m=str.replace(/\u00a0/g," ").match(/(\d{1,3}(?:[ .]\d{3})+|\d+)(?:[.,](\d{1,2}))?(?!\d)/);if(!m)return null;
+  const ent=+m[1].replace(/[ .]/g,"");return m[2]?ent+(+m[2])/Math.pow(10,m[2].length):ent;
+}
+function allNums(line){const out=[];const re=/(\d{1,3}(?:[ .]\d{3})+|\d+)(?:[.,](\d{1,2}))?(?![\d\/])/g;let m;while((m=re.exec(line.replace(/\u00a0/g," ")))){const n=parseNum(m[0]);if(n!==null)out.push(n);}return out;}
+function parseTicket(text){
+  const lines=text.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  const pri=[/net\s*[àa]\s*payer/i,/total\s*(ttc|g[eé]n[eé]ral|[àa]\s*payer)/i,/montant\s*(total|ttc|pay[eé]|d[uû])/i,/\btotal\b/i,/[àa]\s*payer/i,/esp[eè]ces|cash|carte|pay[eé]/i];
+  let montant=null;
+  for(const re of pri){for(let i=lines.length-1;i>=0;i--){const l=lines[i];if(!re.test(l)||/sous[- ]?total|sub ?total|tva|vat|rendu|monnaie/i.test(l))continue;
+      let ns=allNums(l);if(!ns.length&&lines[i+1])ns=allNums(lines[i+1]);ns=ns.filter(n=>n>0&&n<1e9);if(ns.length){montant=ns[ns.length-1];break;}}
+    if(montant!==null)break;}
+  if(montant===null){const ns=lines.filter(l=>!/(t[eé]l|phone|rccm|nif|id\.?nat|n[°o]\s*imp)/i.test(l)).flatMap(allNums).filter(n=>n>0&&n<1e8);if(ns.length)montant=Math.max(...ns);}
+  let devise=null;if(/\b(fc|cdf)\b|francs?\s+congolais/i.test(text))devise="CDF";else if(/f\.?\s?cfa|fcfa|xof/i.test(text))devise="XOF";else if(/\$|usd|dollar/i.test(text))devise="USD";
+  let date=null;const dm=text.match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);if(dm){let y=+dm[3];if(y<100)y+=2000;const mo=+dm[2],d=+dm[1];if(mo>=1&&mo<=12&&d>=1&&d<=31&&y>2015&&y<2100)date=y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0");}
+  const commerce=(lines.find(l=>/[a-zà-ü]{3}/i.test(l)&&!/^\d/.test(l))||"").slice(0,40);
+  return{montant,devise,date,commerce,poste:guessPoste(text)};
+}
+async function photoToJpeg(file,max){
+  let src;try{src=await createImageBitmap(file);}catch(e){src=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(file);});}
+  const w=src.width,h=src.height,k=Math.min(1,max/Math.max(w,h));const cv=document.createElement("canvas");cv.width=Math.round(w*k);cv.height=Math.round(h*k);
+  cv.getContext("2d").drawImage(src,0,0,cv.width,cv.height);
+  const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",0.85));const url=cv.toDataURL("image/jpeg",0.85);
+  return{canvas:cv,blob,b64:url.split(",")[1],url};
+}
+let ocrScript=null;
+function loadTesseract(){if(window.Tesseract)return Promise.resolve();if(!ocrScript)ocrScript=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src=OCR_BASE+"tesseract.min.js";sc.onload=res;sc.onerror=()=>{ocrScript=null;rej(new Error("ocr"));};document.head.appendChild(sc);});return ocrScript;}
+async function readLocal(img,status){
+  await loadTesseract();
+  const r=await window.Tesseract.recognize(img.canvas,"fra",{workerPath:OCR_BASE+"worker.min.js",corePath:OCR_BASE+"core",langPath:OCR_BASE+"lang",gzip:true,
+    logger:m=>{if(m.status==="recognizing text")status("Lecture du ticket sur le téléphone… "+Math.round(m.progress*100)+" %");}});
+  return parseTicket(r.data.text||"");
+}
+function ticketPrompt(){
+  const postes=[...Object.entries(SBCATS),...(S.postesPerso||[]).map(pp=>["pp_"+pp.id,pp.label])].map(([k,l])=>'"'+k+'" ('+l+')').join(", ");
+  return "Voici la photo d'un ticket de caisse ou d'une facture, à Kinshasa (montants en USD ou en francs congolais FC/CDF) ou à Abidjan (F CFA, code XOF). "+
+  "Réponds uniquement par un objet JSON, sans texte autour : {\"montant\": nombre (le total final réellement payé, pas un sous-total ni la TVA), \"devise\": \"USD\" ou \"CDF\" ou \"XOF\", \"commerce\": nom du commerce, \"date\": \"AAAA-MM-JJ\" ou null, \"poste\": une de ces clés : "+postes+", \"confiance\": \"haute\" ou \"moyenne\" ou \"basse\"}. Si l'image n'est pas un ticket lisible, mets montant à null.";
+}
+function parseJsonLoose(t){const m=String(t||"").match(/\{[\s\S]*\}/);if(!m)throw new Error("json");return JSON.parse(m[0]);}
+async function readWithSample(img){
+  const lim=sample.limits?await sample.limits():{images:true};if(!lim||!lim.images)throw new Error("noimg");
+  const r=await sample(ticketPrompt(),{images:[img.blob],modelTier:"default",cache:false});
+  return parseJsonLoose(r.text);
+}
+async function readWithKey(img){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":S.cleApi,"anthropic-version":"2026-10-21","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-opus-5-5",max_tokens:2000,fallbacks:"default",output_config:{effort:"low"},
+      messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:img.b64}},{type:"text",text:ticketPrompt()}]}]})});
+  if(!res.ok){const e=new Error("api");e.status=res.status;throw e;}
+  const msg=await res.json();
+  if(msg.stop_reason==="refusal")throw new Error("refus");
+  return parseJsonLoose((msg.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""));
+}
+function engineName(){return sample?"claude":(!window.claude&&S.cleApi)?"api":(!window.claude?"local":"none");}
+function renderEngine(){const e=engineName();$("scan-engine").textContent=e==="claude"||e==="api"?"Lecture par Claude":e==="local"?"Lecture sur le téléphone (vérifiez le montant)":"Lecture automatique indisponible : saisissez le montant";}
+function fillScanPostes(sel){const opts=[...Object.entries(SBCATS),...(S.postesPerso||[]).map(pp=>["pp_"+pp.id,pp.label])];$("sc-poste").innerHTML=opts.map(([k,l])=>'<option value="'+esc(k)+'"'+(k===sel?" selected":"")+'>'+esc(l)+'</option>').join("");}
+async function onScan(file){
+  if(!file||locked())return;
+  const card=$("scan-card"),st=t=>{$("scan-status").textContent=t;};
+  card.hidden=false;$("f-scan").reset();fillScanPostes("divers");$("sc-date").value=new Date().toISOString().slice(0,10);$("sc-devise").value=$("pl-dev").value;
+  $("sc-ok").disabled=true;st("Préparation de la photo…");
+  let img;try{img=await photoToJpeg(file,engineName()==="local"?2000:1568);$("scan-img").src=img.url;}catch(e){st("Cette photo n'a pas pu être ouverte. Réessayez ou saisissez le montant.");$("sc-ok").disabled=false;return;}
+  card.scrollIntoView({block:"nearest",behavior:"smooth"});
+  const eng=engineName();let r=null,note="";
+  try{
+    if(eng==="claude"){st("Claude lit le ticket…");r=await readWithSample(img);}
+    else if(eng==="api"){st("Claude lit le ticket…");r=await readWithKey(img);}
+    else if(eng==="local"){st("Lecture du ticket sur le téléphone…");r=await readLocal(img,st);note=" Lecture faite sur le téléphone : vérifiez le montant.";}
+  }catch(e){
+    if(eng==="api"&&e.status===401)note="La clé API est refusée : vérifiez-la dans Mes chiffres.";
+    else if(e&&e.code==="not_granted")note="L'accès à Claude a été refusé.";
+    else if(e&&e.message==="ocr")note="Le module de lecture n'a pas pu se charger. Connectez-vous une fois à Internet.";
+    else note="Le ticket n'a pas pu être lu.";
+    if(eng==="api"&&!window.claude){try{st("Nouvel essai sur le téléphone…");r=await readLocal(img,st);note+=" Lecture faite sur le téléphone à la place.";}catch(e2){}}
+  }
+  if(r){
+    if(r.montant!=null&&isFinite(+r.montant))$("sc-montant").value=+r.montant;
+    if(["USD","CDF","XOF"].includes(r.devise))$("sc-devise").value=r.devise;
+    const keys=[...Object.keys(SBCATS),...(S.postesPerso||[]).map(pp=>"pp_"+pp.id)];fillScanPostes(keys.includes(r.poste)?r.poste:"divers");
+    if(r.date&&/^\d{4}-\d{2}-\d{2}$/.test(r.date))$("sc-date").value=r.date;
+    $("sc-label").value=(r.commerce||"Ticket").toString().slice(0,60);
+    st((r.montant!=null?"Montant trouvé. Vérifiez puis validez."+(r.confiance==="basse"?" Lecture incertaine.":""):"Montant introuvable : saisissez-le.")+note);
+  }else{$("sc-label").value="Ticket";st((note||"")+" Saisissez le montant.");}
+  $("sc-ok").disabled=false;$("sc-montant").focus();
+}
+function bindScan(){
+  $("scan-file").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";onScan(f);});
+  $("sc-cancel").onclick=()=>{$("scan-card").hidden=true;$("scan-img").removeAttribute("src");};
+  $("f-scan").addEventListener("submit",async e=>{e.preventDefault();if(locked())return;const m=+$("sc-montant").value||0;if(m<=0)return;const k=$("sc-poste").value;
+    $("sc-ok").disabled=true;
+    try{await backend.addJ(await pack({type:"depense",cat:k,label:$("sc-label").value.trim()||catLabel(k),montant:m,devise:$("sc-devise").value,date:$("sc-date").value}));$("scan-card").hidden=true;$("scan-img").removeAttribute("src");}
+    catch(err){setSave("Échec de l'enregistrement");}
+    $("sc-ok").disabled=false;});
+  $("ia-panel").hidden=!!window.claude;
+  $("ia-save").onclick=()=>{const v=$("ia-key").value.trim();if(!v)return;S.cleApi=v;$("ia-key").value="";changed();};
+  $("ia-del").onclick=()=>{delete S.cleApi;changed();};
+}
 // ---------- sauvegarde ----------
 async function exportData(){
-  const body={S:plain(S),J:J.map(e=>{const o=Object.assign({},e);delete o.id;return o;})};
+  const sx=plain(S);delete sx.cleApi;const body={S:sx,J:J.map(e=>{const o=Object.assign({},e);delete o.id;return o;})};
   const out={app:"budget-kin-abj",v:1,at:new Date().toISOString()};
   if(KEY&&LOCK){out.lock={salt:LOCK.salt,iter:LOCK.iter};out.payload=await seal(body,KEY);}else out.payload=body;
   return JSON.stringify(out);
@@ -913,7 +1058,7 @@ async function importData(txt,pw){
   const o=JSON.parse(txt);if(!o||o.app!=="budget-kin-abj")throw new Error("format");
   let body=o.payload;
   if(body&&body.enc){if(!pw)throw new Error("pw");const k=await deriveKey(pw,o.lock.salt,o.lock.iter);body=await unseal(body,k);}
-  const d=migrate(body.S);if(!d)throw new Error("format");
+  const d=migrate(body.S);if(!d)throw new Error("format");if(S.cleApi&&!d.cleApi)d.cleApi=S.cleApi;
   const old=await backend.listJ();for(const x of old)await backend.delJ(x.id);
   S=d;ready=true;await backend.setEtat(await pack(S));
   for(const e of (body.J||[]))await backend.addJ(await pack(e));
@@ -957,11 +1102,12 @@ function bindBio(){
   $("bio-on").onclick=async()=>{const m=$("l-msg");try{await bioEnable();m.style.color="var(--ok)";m.textContent="Face ID ou empreinte activé.";}catch(e){m.style.color="var(--crit)";m.textContent="Activation impossible sur cet appareil ou annulée.";}renderSecurity();};
   $("bio-off").onclick=async()=>{await bioDisable();renderSecurity();};
 }
-function renderSecurity(){const on=!!LOCK;$("sec-off").hidden=on;$("sec-on").hidden=!on;const bw=$("bio-wrap");bw.hidden=!(on&&bioOK());$("bio-on").hidden=!!bioCred();$("bio-off").hidden=!bioCred();$("u-bio").hidden=!(bioOK()&&bioCred());const ch=$("sec-chip");ch.textContent=on?"Mot de passe actif":"Sans mot de passe";ch.className="chip "+(on?"ok":"warn");}
+function renderSecurity(){renderEngine();const ic=$("ia-chip");if(ic){ic.textContent=S.cleApi?"Clé API enregistrée":"Lecture sur le téléphone";ic.className="chip "+(S.cleApi?"ok":"info");}
+const on=!!LOCK;$("sec-off").hidden=on;$("sec-on").hidden=!on;const bw=$("bio-wrap");bw.hidden=!(on&&bioOK());$("bio-on").hidden=!!bioCred();$("bio-off").hidden=!bioCred();$("u-bio").hidden=!(bioOK()&&bioCred());const ch=$("sec-chip");ch.textContent=on?"Mot de passe actif":"Sans mot de passe";ch.className="chip "+(on?"ok":"warn");}
 
 // ---------- événements ----------
 function bindSettings(){
-  $("f-set").addEventListener("change",e=>{const m={"s-taux":"taux","s-dime":"dimePct","s-dimebase":"dimeBase","s-dimelieu":"dimeLieu"};const k=m[e.target.id];if(!k)return;let v=e.target.value;if(k==="taux"||k==="dimePct")v=Math.max(k==="taux"?1:0,+v||0);S[k]=v;changed();});
+  $("f-set").addEventListener("change",e=>{const m={"s-taux":"taux","s-tauxcdf":"tauxCDF","s-dime":"dimePct","s-dimebase":"dimeBase","s-dimelieu":"dimeLieu"};const k=m[e.target.id];if(!k)return;let v=e.target.value;if(k==="taux"||k==="tauxCDF"||k==="dimePct")v=Math.max(k==="dimePct"?0:1,+v||0);S[k]=v;changed();});
   const tbl=(tid,key)=>{
     $(tid).addEventListener("change",e=>{const tr=e.target.closest("tr");const k=e.target.dataset.k;if(!tr||!k)return;const it=S[key].find(x=>x.id===tr.dataset.id);if(!it)return;it[k]=k==="montant"?(+e.target.value||0):e.target.value;changed();});
     $(tid).addEventListener("click",e=>{const b=e.target.closest("[data-del]");if(!b)return;const id=b.closest("tr").dataset.id;S[key]=S[key].filter(x=>x.id!==id);changed();});};
@@ -1043,7 +1189,7 @@ function route(){const v=(location.hash||"#bord").slice(1);const ok=["bord","avi
 window.addEventListener("hashchange",route);
 bindSettings();bindConseils();bindProjets();bindJournal();bindAvis();route();renderAll();
 $("f-avis").requestSubmit();
-bindLock();bindBackup();bindBio();start();
+bindLock();bindBackup();bindBio();bindScan();start();
 })();
 </script>
 
