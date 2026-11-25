@@ -338,19 +338,30 @@ ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;
           <p class="note" id="pl-jour" style="margin-top:12px"></p>
           <h3 style="margin:18px 0 6px">Charges fixes : cochez quand c'est payé</h3>
           <div id="pl-fixes" class="fixes"></div>
-          <h3 style="margin:18px 0 6px">Dépenses courantes : ce qui reste dans chaque enveloppe</h3>
-          <div class="tbl"><table id="pl-var"></table></div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px;margin:18px 0 6px">
+            <h3>Dépenses courantes : tapez chaque dépense dans son poste</h3>
+            <div class="fld" style="flex:0 0 auto"><label for="pl-dev">Montants saisis en</label><select id="pl-dev" style="width:auto"><option value="USD">USD</option><option value="XOF">F CFA</option></select></div>
+          </div>
+          <div id="pl-var" class="fixes"></div>
         </div>
         <div class="panel">
-          <header><h2>Noter une dépense ou une recette</h2></header>
+          <header><h2>Créer un nouveau poste de dépense</h2><span class="muted small">Il apparaîtra dans le tableau ci-dessus</span></header>
+          <form class="f" id="f-np">
+            <div class="fld full"><label for="np-label">Nom du poste</label><input id="np-label" required placeholder="Santé, scolarité, voyage, cadeaux…"></div>
+            <div class="fld"><label for="np-budget">Prévu par mois en USD (facultatif)</label><input id="np-budget" type="number" min="0" step="any" placeholder="0"></div>
+            <div class="fld"><label for="np-montant">Dépense déjà faite (facultatif)</label><input id="np-montant" type="number" min="0" step="any" placeholder="0"></div>
+            <div class="actions"><button class="pri" type="submit">Créer le poste</button></div>
+          </form>
+        </div>
+        <div class="panel">
+          <header><h2>Noter une recette</h2></header>
           <form class="f" id="f-j">
-            <div class="fld full"><label>Type</label><div class="seg"><label><input type="radio" name="j-type" value="depense" checked> Dépense</label><label><input type="radio" name="j-type" value="recette"> Recette</label></div></div>
             <div class="fld full"><label for="j-label">Libellé</label><input id="j-label" required placeholder="Courses, carburant, cadeau…"></div>
             <div class="fld"><label for="j-montant">Montant</label><input id="j-montant" type="number" min="0" step="any" required></div>
             <div class="fld"><label for="j-devise">Devise</label><select id="j-devise"><option value="USD">USD</option><option value="XOF">F CFA</option></select></div>
-            <div class="fld"><label for="j-cat" id="j-cat-l">Poste</label><select id="j-cat"></select></div>
+            <div class="fld"><label for="j-cat" id="j-cat-l">Source</label><select id="j-cat"></select></div>
             <div class="fld"><label for="j-date">Date</label><input id="j-date" type="date" required></div>
-            <div class="actions"><button class="pri" type="submit">Ajouter</button></div>
+            <div class="actions"><button class="pri" type="submit">Ajouter la recette</button></div>
           </form>
         </div>
         <div class="panel">
@@ -437,6 +448,8 @@ const CATCOL={dette:"--c5",logement:"--c4",famille:"--c3",epargne:"--c6",eglise:
 const SBCATS={alimentation:"Courses & alimentation",transport:"Carburant & transport",sorties:"Restaurants & sorties",maison:"Maison & personnel",divers:"Divers & dons ponctuels"};
 const JCATS=Object.assign({},SBCATS,{famille:"Famille (hors envoi fixe)",sante:"Santé",projet:"Projet Abidjan",autre:"Autre imprévu"});
 const RCATS={formation:"Formation",actuariat:"Mission d'actuariat",prime:"Prime ou bonus",autre_r:"Autre recette"};
+const ppLabels=()=>{const o={};((typeof S!=="undefined"&&S.postesPerso)||[]).forEach(pp=>o["pp_"+pp.id]=pp.label);return o;};
+const catLabel=k=>k==="fixe"?"Charge fixe":(JCATS[k]||ppLabels()[k]||(String(k).startsWith("pp_")?"Poste supprimé":k));
 const SB_DEFAULT={alimentation:130,transport:75,sorties:50,maison:70,divers:25};
 const W2M=52/12;
 const LIEUX={kin:"Kinshasa",abj:"Abidjan"};
@@ -464,6 +477,7 @@ function migrate(d){
   }
   if(d.v!==2)return null;
   if(!d.sousBudget)d.sousBudget=Object.assign({},SB_DEFAULT);
+  if(!Array.isArray(d.postesPerso))d.postesPerso=[];
   return Object.assign(defaults(),d);
 }
 let S=defaults();
@@ -541,8 +555,10 @@ function journalMois(c){
   const rec=recettes.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);
   const budgets={};
   Object.keys(SBCATS).forEach(k=>budgets[k]=(+S.sousBudget[k]||0)*W2M);
+  const pl=ppLabels();(S.postesPerso||[]).forEach(pp=>budgets["pp_"+pp.id]=+pp.budget||0);
   const sp={};items.forEach(e=>{if(e.cat==="fixe"||e.cat==="abonnements")return;const k=(e.cat==="courant"||e.cat==="loisirs")?(e.cat==="loisirs"?"sorties":"divers"):e.cat;sp[k]=(sp[k]||0)+toUSD(e.montant,e.devise);});
-  const postes=Object.keys(JCATS).map(k=>({k,label:JCATS[k],budget:budgets[k]||0,spent:sp[k]||0}));
+  const keys=Object.keys(JCATS).concat(Object.keys(pl));Object.keys(sp).forEach(k=>{if(!keys.includes(k))keys.push(k);});
+  const postes=keys.map(k=>({k,label:catLabel(k),budget:budgets[k]||0,spent:sp[k]||0}));
   const hors=postes.filter(p=>!p.budget).reduce((a,p)=>a+p.spent,0);
   const total=items.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);
   return{items,all,recettes,rec,postes,hors,total};
@@ -551,12 +567,14 @@ function planMois(c,jm){
   const fixes=S.charges.filter(ch=>ch.cat!=="courant").map(ch=>({id:ch.id,label:ch.label,montant:+ch.montant||0,devise:ch.devise,prevuU:toUSD(ch.montant,ch.devise)}));
   if(c.dime>0)fixes.push({id:"dime",label:"Dîme ("+S.dimePct+" %)",montant:Math.round(c.dime),devise:"USD",prevuU:c.dime});
   fixes.forEach(f=>{f.paid=jm.items.filter(e=>e.cat==="fixe"&&e.chargeId===f.id);f.paidU=f.paid.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);});
-  const vars=Object.keys(SBCATS).map(k=>{const p=jm.postes.find(x=>x.k===k);return{k,label:SBCATS[k],budget:p.budget,spent:p.spent,reste:p.budget-p.spent};});
+  const vk=Object.keys(SBCATS).concat((S.postesPerso||[]).map(pp=>"pp_"+pp.id));
+  const vars=vk.map(k=>{const p=jm.postes.find(x=>x.k===k)||{budget:0,spent:0};return{k,label:catLabel(k),budget:p.budget,spent:p.spent,reste:p.budget-p.spent,perso:k.startsWith("pp_")};});
+  const autres=jm.postes.filter(p=>!vk.includes(p.k)&&p.spent>0);
   const prevu=fixes.reduce((a,f)=>a+f.prevuU,0)+vars.reduce((a,v)=>a+v.budget,0);
   const resteFixes=fixes.filter(f=>!f.paid.length).reduce((a,f)=>a+f.prevuU,0);
   const resteVar=vars.reduce((a,v)=>a+Math.max(0,v.reste),0);
   const now=new Date();const dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();const jours=dim-now.getDate()+1;
-  return{fixes,vars,prevu,resteFixes,resteVar,reste:resteFixes+resteVar,depense:jm.total,jours,nonPayees:fixes.filter(f=>!f.paid.length).length};
+  return{fixes,vars,autres,prevu,resteFixes,resteVar,reste:resteFixes+resteVar,depense:jm.total,jours,nonPayees:fixes.filter(f=>!f.paid.length).length};
 }
 
 // ---------- projets ----------
@@ -742,12 +760,18 @@ function renderJournal(c){
     if(f.paid.length){const e=f.paid[f.paid.length-1];return '<div class="fx">'+head+'<div class="a"><span class="chip ok">Payé le '+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+(Math.abs(f.paidU-f.prevuU)>0.5?" · "+fm(f.paid.reduce((x,y)=>x+(+y.montant||0),0),e.devise):"")+'</span><button class="ghost" data-unpay="'+esc(f.paid.map(x=>x.id).join(","))+'">Annuler</button></div></div>';}
     return '<div class="fx">'+head+'<div class="a"><input type="number" min="0" step="any" data-amt="'+esc(f.id)+'" value="'+f.montant+'" aria-label="Montant payé pour '+esc(f.label)+'"><button data-pay="'+esc(f.id)+'">Payé</button></div></div>';}).join("")+
     '<div class="row tot" style="margin-top:4px"><span>Reste à payer</span><span class="num">'+usd(pl.resteFixes)+'</span></div>';
-  $("pl-var").innerHTML='<tr><th>Enveloppe</th><th class="r">Prévu</th><th class="r">Dépensé</th><th class="r">Reste</th></tr>'+pl.vars.map(v=>'<tr><td>'+esc(v.label)+'</td><td class="r num">'+usd(v.budget)+'</td><td class="r num">'+usd(v.spent)+'</td><td class="r num" style="color:var('+(v.reste<0?'--crit':v.reste<v.budget*0.2?'--warn':'--ok')+')">'+(v.reste<0?"− "+usd(-v.reste):usd(v.reste))+'</td></tr>').join("")+
-    '<tr><td><b>Total</b></td><td class="r num"><b>'+usd(pl.vars.reduce((a,v)=>a+v.budget,0))+'</b></td><td class="r num"><b>'+usd(pl.vars.reduce((a,v)=>a+v.spent,0))+'</b></td><td class="r num"><b>'+usd(pl.resteVar)+'</b></td></tr>';
+  const dev=$("pl-dev").value;
+  $("pl-var").innerHTML=pl.vars.map(v=>{const col=v.reste<0?'--crit':v.budget&&v.reste<v.budget*0.2?'--warn':'--ok';
+    return '<div class="fx"><div class="t"><span>'+esc(v.label)+'</span><span class="small muted num">'+(v.budget?"Prévu "+usd(v.budget)+" · ":"")+'Dépensé '+usd(v.spent)+'</span></div>'+
+    '<div class="a"><span class="num" style="font-weight:600;color:var('+col+')">'+(v.budget?(v.reste<0?"Dépassé de "+usd(-v.reste):"Reste "+usd(v.reste)):"Sans budget")+'</span></div>'+
+    '<div class="a" style="flex-basis:100%"><input type="number" min="0" step="any" inputmode="decimal" data-add="'+esc(v.k)+'" placeholder="Montant en '+(dev==="XOF"?"F CFA":"USD")+'" aria-label="Nouvelle dépense pour '+esc(v.label)+'" style="width:auto;flex:1 1 140px"><button data-addbtn="'+esc(v.k)+'">Déduire</button>'+
+    (v.spent>0?'<button class="ghost" data-undo="'+esc(v.k)+'">Annuler la dernière</button>':'')+(v.perso?'<button class="ghost" data-delpp="'+esc(v.k.slice(3))+'">Supprimer le poste</button>':'')+'</div></div>';}).join("")+
+    (pl.autres.length?'<div class="fx"><div class="t"><span>Autres dépenses notées</span><span class="small muted">'+esc(pl.autres.map(a=>a.label).join(", "))+'</span></div><div class="a"><span class="num">'+usd(pl.autres.reduce((x,a)=>x+a.spent,0))+'</span></div></div>':'')+
+    '<div class="row tot" style="margin-top:4px"><span>Reste dans les enveloppes</span><span class="num">'+usd(pl.resteVar)+'</span></div>';
   $("j-mois").textContent=moisNom(new Date());
   $("j-total").textContent=jm.all.length?"Dépenses "+usd(jm.total)+(jm.rec?" · Recettes "+usd(jm.rec):""):"";
   if(!jm.all.length)$("j-list").innerHTML='<p class="empty">Rien de noté ce mois. Ajoutez une dépense ou une recette avec le formulaire ci-dessus : chaque dépense est comparée à votre budget et déclenche une alerte à 80 % puis à 100 %.</p>';
-  else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc((r?RCATS[e.cat]:(e.cat==="fixe"?"Charge fixe":JCATS[e.cat]))||e.cat)+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+(e.devise==="XOF"?xof(+e.montant):usd(+e.montant))+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
+  else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc(r?(RCATS[e.cat]||e.cat):catLabel(e.cat))+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+(e.devise==="XOF"?xof(+e.montant):usd(+e.montant))+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
   $("j-budget").innerHTML=jm.postes.filter(p=>p.budget||p.spent).map(p=>{const r=p.budget?p.spent/p.budget:null;const st=r===null?"warn":r>1?"crit":r>0.8?"warn":"";
     return '<div class="stack" style="gap:4px"><div class="row"><span>'+esc(p.label)+'</span><span class="num">'+usd(p.spent)+(p.budget?" / "+usd(p.budget):"")+'</span></div>'+(p.budget?'<div class="prog '+st+'"><span style="width:'+Math.min(100,r*100)+'%"></span></div>':'<p class="small muted">Hors budget : pris sur la marge libre</p>')+'</div>';}).join("")+
     '<div class="row"><span>Recettes ponctuelles</span><span class="num plus">+ '+usd(jm.rec)+'</span></div><div class="row tot"><span>Imprévus vs marge libre'+(jm.rec?" + recettes":"")+'</span><span class="num">'+usd(jm.hors)+" / "+usd(Math.max(c.marge,0)+jm.rec)+'</span></div>';
@@ -956,14 +980,28 @@ function bindProjets(){
   $("proj-list").addEventListener("click",e=>{const d=e.target.closest("[data-del-p]");if(d){S.projets=S.projets.filter(p=>p.id!==d.dataset.delP);changed();return;}
     const u=e.target.closest("[data-up]");if(u){const i=+u.dataset.up;if(i>0){const a=S.projets;[a[i-1],a[i]]=[a[i],a[i-1]];changed();}}});
 }
-function fillJCat(){const r=document.querySelector('input[name="j-type"]:checked').value==="recette";
+function fillJCat(){const r=true;
   $("j-cat").innerHTML=Object.entries(r?RCATS:JCATS).map(([k,l])=>'<option value="'+k+'">'+esc(l)+'</option>').join("");
   $("j-cat-l").textContent=r?"Source":"Poste";$("j-label").placeholder=r?"Formation assureur, mission d'actuariat…":"Courses, carburant, cadeau…";}
 function bindJournal(){
   $("j-date").value=new Date().toISOString().slice(0,10);
-  document.querySelectorAll('input[name="j-type"]').forEach(x=>x.addEventListener("change",fillJCat));
+  $("pl-dev").addEventListener("change",()=>{const c=calc();renderJournal(c);});
+  const addTo=async(k,btn)=>{if(locked())return;const inp=document.querySelector('[data-add="'+CSS.escape(k)+'"]');const m=+inp.value||0;if(m<=0){inp.focus();return;}
+    if(btn)btn.disabled=true;inp.value="";
+    try{await backend.addJ(await pack({type:"depense",cat:k,label:catLabel(k),montant:m,devise:$("pl-dev").value,date:new Date().toISOString().slice(0,10)}));}catch(err){setSave("Échec de l'enregistrement");}
+    if(btn)btn.disabled=false;};
+  $("pl-var").addEventListener("click",async e=>{
+    const ab=e.target.closest("[data-addbtn]");if(ab){addTo(ab.dataset.addbtn,ab);return;}
+    const ub=e.target.closest("[data-undo]");if(ub&&!locked()){const k=ub.dataset.undo;const m=curMonth();const last=J.filter(x=>x.cat===k&&x.type!=="recette"&&(x.date||"").slice(0,7)===m).sort((x,y)=>(x.date+x.id).localeCompare(y.date+y.id)).pop();if(last)try{await backend.delJ(last.id);}catch(err){}return;}
+    const db=e.target.closest("[data-delpp]");if(db){S.postesPerso=S.postesPerso.filter(pp=>pp.id!==db.dataset.delpp);changed();}
+  });
+  $("pl-var").addEventListener("keydown",e=>{const k=e.target.dataset&&e.target.dataset.add;if(k&&e.key==="Enter"){e.preventDefault();addTo(k,null);}});
+  $("f-np").addEventListener("submit",async e=>{e.preventDefault();if(locked())return;const label=$("np-label").value.trim();if(!label)return;
+    const pp={id:nid(),label,budget:Math.max(0,+$("np-budget").value||0)};S.postesPerso.push(pp);changed();
+    const m=+$("np-montant").value||0;e.target.reset();
+    if(m>0)try{await backend.addJ(await pack({type:"depense",cat:"pp_"+pp.id,label,montant:m,devise:"USD",date:new Date().toISOString().slice(0,10)}));}catch(err){}});
   $("f-j").addEventListener("submit",async e=>{e.preventDefault();if(locked())return;
-    const it={type:document.querySelector('input[name="j-type"]:checked').value,label:$("j-label").value.trim(),montant:+$("j-montant").value||0,devise:$("j-devise").value,cat:$("j-cat").value,date:$("j-date").value};
+    const it={type:"recette",label:$("j-label").value.trim(),montant:+$("j-montant").value||0,devise:$("j-devise").value,cat:$("j-cat").value,date:$("j-date").value};
     $("j-label").value="";$("j-montant").value="";
     try{await backend.addJ(await pack(it));}catch(err){setSave("Échec de l'enregistrement");}});
   $("pl-fixes").addEventListener("click",async e=>{
