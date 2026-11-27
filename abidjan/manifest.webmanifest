@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Mon Budget",
-  "short_name": "Mon Budget",
-  "description": "Conseiller budgétaire personnel",
+  "name": "Sophia By MB",
+  "short_name": "Sophia By MB",
+  "description": "Sophia By MB : conseiller budgétaire personnel",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

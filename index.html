@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Budget Kin–Abidjan</title>
+<title>Sophia By MB</title>
 <meta name="theme-color" content="#0e5c50">
 <meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Budget">
+<meta name="apple-mobile-web-app-title" content="Sophia By MB">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -304,7 +304,7 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
 
 <div id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-t">
   <div class="box">
-    <p class="lbl">Budget Kin–Abidjan</p>
+    <p class="lbl">Sophia By MB</p>
     <h1 id="lock-t">Ouverture sécurisée…</h1>
     <p class="muted small" id="lock-sub">Chargement de vos données.</p>
     <form id="f-unlock" hidden>
@@ -375,7 +375,7 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
   <header class="top">
     <div>
       <p class="lbl">Conseiller financier personnel</p>
-      <h1>Budget Kin–Abidjan</h1>
+      <h1>Sophia By MB</h1>
     </div>
     <div class="meta">
       <span class="pill">Paie dans <b id="h-mois"></b></span>
@@ -1354,7 +1354,7 @@ async function devVerify(){
   const ids=[];try{const a=localStorage.getItem("bka-dev"),b=bioCred();if(a)ids.push(a);if(b&&b!==a)ids.push(b);}catch(e){}
   if(ids.length){try{const r=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:ids.map(i=>({type:"public-key",id:ub64(i)})),userVerification:"required",timeout:60000}});
       if(!uvOK(r.response.authenticatorData))throw new Error("uv");return true;}catch(e){if(!e||e.name!=="NotAllowedError")throw e;/* identifiant effacé ou refusé : on en crée un nouveau */}}
-  const c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:document.title||"Budget"},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"budget",displayName:"Mon budget"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000}});
+  const c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:document.title||"Budget"},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"budget",displayName:"Sophia By MB"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000}});
   if(c.response.getAuthenticatorData&&!uvOK(c.response.getAuthenticatorData()))throw new Error("uv");
   try{localStorage.setItem("bka-dev",b64(c.rawId));}catch(e){}return true;}
 async function devUnlock(){
@@ -1381,7 +1381,7 @@ function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("bka",1);r.
 async function idbDo(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction("k",mode);const st=tx.objectStore("k");const r=fn(st);tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error);});}
 const bioCred=()=>{try{return localStorage.getItem("bka-bio");}catch(e){return null;}};
 async function bioEnable(){
-  const cred=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"Budget Kin-Abidjan"},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"budget",displayName:"Budget Kin-Abidjan"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000}});
+  const cred=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"Sophia By MB"},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"budget",displayName:"Sophia By MB"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000}});
   await idbDo("readwrite",st=>st.put(KEY,"key"));
   localStorage.setItem("bka-bio",b64(cred.rawId));
 }
