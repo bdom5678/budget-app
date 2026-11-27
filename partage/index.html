@@ -172,6 +172,7 @@ nav.tabs a{display:flex;flex-direction:column;align-items:center;justify-content
 nav.tabs a svg{width:22px;height:22px}
 nav.tabs a[aria-current="page"]{background:transparent;color:var(--accent)}
 nav.tabs a:hover:not([aria-current="page"]){background:var(--sunk)}
+.badge[hidden]{display:none!important}
 nav.tabs .badge{position:absolute;top:6px;left:calc(50% + 6px);margin:0}
 .gear{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:20px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
 .today{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
@@ -197,6 +198,18 @@ nav.tabs .badge{position:absolute;top:6px;left:calc(50% + 6px);margin:0}
 .pbar i.w{background:var(--ochre)}
 .postes{display:flex;flex-direction:column;gap:12px}
 .postes .ln{display:flex;justify-content:space-between;gap:8px;font-size:.92rem}
+.pfbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.pfbar button{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--card,#fff);font:inherit;font-size:.9rem;color:inherit;cursor:pointer}
+.pfbar button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.pfrow{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--card,#fff)}
+.pfrow.on{border:2px solid var(--accent)}
+.pfrow .l1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pfrow .l1 b{font-size:1.05rem}
+.pfrow .act{display:flex;gap:8px;flex-wrap:wrap}
+.pfrow .act button{min-height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:transparent;font:inherit;font-size:.9rem;color:inherit;cursor:pointer}
+.pfrow .act button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.pfrow .act button.dang{color:var(--crit);border-color:var(--crit)}
+.pfrow input{min-height:40px}
 .sheet{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center}
 .sheet[hidden]{display:none!important}
 .sheet .box{background:var(--bg);width:100%;max-width:560px;max-height:100%;overflow-y:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
@@ -295,6 +308,19 @@ nav.tabs .badge{position:absolute;top:6px;left:calc(50% + 6px);margin:0}
     <div id="ss-slot"></div>
   </div>
 </div>
+<div class="sheet" id="sh-pf" hidden role="dialog" aria-modal="true" aria-labelledby="pf-t">
+  <div class="box">
+    <div class="hd"><h2 id="pf-t">Mes portefeuilles</h2><button type="button" class="x" id="pf-x" aria-label="Fermer" style="width:44px;height:44px;border-radius:22px">×</button></div>
+    <p class="small muted">Chaque portefeuille a ses propres revenus, charges, dépenses, budget et projets. Pratique pour séparer le ménage, une activité, un projet ou l'argent d'un proche.</p>
+    <div id="pf-list" class="stack" style="gap:10px"></div>
+    <div id="pf-tot"></div>
+    <form id="pf-new" class="stack" style="gap:8px" onsubmit="return false">
+      <label for="pf-nom" style="font-weight:600">Nouveau portefeuille</label>
+      <div style="display:flex;gap:8px"><input id="pf-nom" maxlength="40" placeholder="Ex. Maison, Commerce, Épargne enfants" style="flex:1;min-width:0"><button type="submit" class="pri" id="pf-add" style="min-height:44px;padding:0 16px">Créer</button></div>
+      <p class="small muted" id="pf-msg"></p>
+    </form>
+  </div>
+</div>
 <div class="sheet" id="sh-bilan" hidden role="dialog" aria-modal="true" aria-labelledby="sb-t">
   <div class="box" id="sb-box"></div>
 </div>
@@ -310,6 +336,7 @@ nav.tabs .badge{position:absolute;top:6px;left:calc(50% + 6px);margin:0}
       <a class="pill" href="#parametres" style="text-decoration:none">Paie dans <b id="h-mois"></b></a>
       <a class="pill" href="#parametres" style="text-decoration:none">Monnaie : <b id="h-taux"></b></a>
       <span class="pill" id="h-save">Enregistrement local</span>
+      <button type="button" class="pill" id="h-pf" style="border:0;cursor:pointer;font-weight:600" aria-label="Changer de portefeuille"><span aria-hidden="true">👛</span> <span id="h-pf-n">Principal</span> ▾</button>
       <button type="button" class="pill" id="h-guide" style="border:0;cursor:pointer;color:var(--accent);font-weight:600">? Guide</button>
       <a class="gear" href="#parametres" aria-label="Réglages" title="Réglages"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
     </div>
@@ -325,6 +352,7 @@ nav.tabs .badge{position:absolute;top:6px;left:calc(50% + 6px);margin:0}
   <!-- AUJOURD'HUI -->
   <section data-view="aujourdhui" hidden>
     <div class="today">
+      <div class="pfbar" id="t-pf" hidden></div>
       <div class="hero" id="t-hero">
         <span class="t" id="t-titre">Il vous reste jusqu'à la paie</span>
         <span class="v" id="t-reste"></span>
@@ -996,7 +1024,7 @@ function renderSettings(){
 }
 
 // ---------- persistance & verrou ----------
-let backend=null,sample=null,KEY=null,LOCK=null,saveT=null,saving=false,pending=false,jUnsub=null,ready=false;
+let BK=null,PF={list:[{id:"main",nom:"Principal"}],cur:"main"},backend=null,sample=null,KEY=null,LOCK=null,saveT=null,saving=false,pending=false,jUnsub=null,ready=false;
 const TE=new TextEncoder(),TD=new TextDecoder();
 const b64=u=>{const a=new Uint8Array(u);let s="";for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s);};
 const ub64=s=>Uint8Array.from(atob(s),ch=>ch.charCodeAt(0));
@@ -1007,26 +1035,30 @@ const plain=o=>JSON.parse(JSON.stringify(o));
 const pack=o=>KEY?seal(o,KEY):Promise.resolve(plain(o));
 const locked=()=>!!LOCK&&!KEY;
 
-function dbBackend(db,id){
-  const col=db.collection("data/users/"+id),et=col.doc("etat"),vr=col.doc("verrou"),jc=db.collection("data/users/"+id+"/journal");
+function dbBackend(db,id,w){
+  const suf=(!w||w==="main")?"":"-"+w;
+  const col=db.collection("data/users/"+id),et=col.doc("etat"+suf),vr=col.doc("verrou"),jc=db.collection("data/users/"+id+"/journal"+suf),mt=col.doc("portefeuilles");
   const rows=qs=>qs.docs.map(d=>({id:d.id,raw:d.data()}));
   return{kind:"db",
-    getEtat:async()=>{const x=await et.get();return x.exists?x.data():null;},setEtat:d=>et.set(d),
+    getEtat:async()=>{const x=await et.get();return x.exists?x.data():null;},setEtat:d=>et.set(d),delEtat:()=>et.delete(),
+    getMeta:async()=>{const x=await mt.get();return x.exists?x.data():null;},setMeta:d=>mt.set(d),
     getLock:async()=>{const x=await vr.get();return x.exists?x.data():null;},setLock:d=>d?vr.set(d):vr.delete(),
     watchJ:cb=>jc.onSnapshot(qs=>cb(rows(qs)),()=>{}),listJ:async()=>rows(await jc.get()),
     addJ:d=>jc.add(d),setJ:(i,d)=>jc.doc(i).set(d),delJ:i=>jc.doc(i).delete()};
 }
-function localBackend(){
+function localBackend(w){
+  const suf=(!w||w==="main")?"":"-"+w;
   const g=k=>{try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}};
   const p=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
-  let subs=[];const jl=()=>g("mbp-journal")||[];const emit=()=>{const l=jl();subs.forEach(f=>f(l));};
+  let subs=[];const jl=()=>g("mbp-journal"+suf)||[];const emit=()=>{const l=jl();subs.forEach(f=>f(l));};
   return{kind:"local",
-    getEtat:async()=>g("mbp-etat")||g("mon-budget"),setEtat:async d=>{p("mbp-etat",d);p("mon-budget",null);},
+    getEtat:async()=>suf?g("mbp-etat"+suf):(g("mbp-etat")||g("mon-budget")),setEtat:async d=>{p("mbp-etat"+suf,d);if(!suf)p("mon-budget",null);},delEtat:async()=>p("mbp-etat"+suf,null),
+    getMeta:async()=>g("mbp-pf"),setMeta:async d=>p("mbp-pf",d),
     getLock:async()=>g("mbp-verrou"),setLock:async d=>p("mbp-verrou",d),
     watchJ:cb=>{subs.push(cb);emit();return()=>{subs=subs.filter(f=>f!==cb);};},listJ:async()=>jl(),
-    addJ:async d=>{const l=jl();l.push({id:nid(),raw:d});p("mbp-journal",l);emit();},
-    setJ:async(i,d)=>{p("mbp-journal",jl().map(x=>x.id===i?{id:i,raw:d}:x));emit();},
-    delJ:async i=>{p("mbp-journal",jl().filter(x=>x.id!==i));emit();}};
+    addJ:async d=>{const l=jl();l.push({id:nid(),raw:d});p("mbp-journal"+suf,l);emit();},
+    setJ:async(i,d)=>{p("mbp-journal"+suf,jl().map(x=>x.id===i?{id:i,raw:d}:x));emit();},
+    delJ:async i=>{const l=jl().filter(x=>x.id!==i);p("mbp-journal"+suf,(l.length||!suf)?l:null);emit();}};
 }
 function setSave(t){$("h-save").textContent=t;}
 function savedLabel(){return (backend&&backend.kind==="db"?"Synchronisé":"Sur cet appareil")+(KEY?" · chiffré":"");}
@@ -1059,8 +1091,9 @@ async function loadAll(){
 async function start(){
   let db=null,user=null;
   if(window.claude&&window.claude.use){try{[sample,db,user]=await Promise.all([window.claude.use("sample"),window.claude.use("db"),window.claude.use("user")]);}catch(e){}}
-  if(db&&user){try{backend=dbBackend(db,await user.id());try{localStorage.removeItem("mon-budget");localStorage.removeItem("budget-kin-abj-j");}catch(e){}}catch(e){backend=null;}}
+  if(db&&user){try{BK={db,uid:await user.id()};backend=dbBackend(BK.db,BK.uid);try{localStorage.removeItem("mon-budget");localStorage.removeItem("budget-kin-abj-j");}catch(e){}}catch(e){backend=null;}}
   if(!backend)backend=localBackend();
+  try{const m=await backend.getMeta();if(m&&Array.isArray(m.list)&&m.list.length){PF=m;if(!PF.list.some(x=>x.id===PF.cur))PF.cur=PF.list[0].id;if(PF.cur!=="main")backend=makeBackend(PF.cur);}}catch(e){}
   try{LOCK=await backend.getLock();}catch(e){showLock("loading","Impossible de joindre vos données. Vérifiez votre connexion puis rouvrez l'outil.");return;}
   if(LOCK){showLock("unlock");return;}
   try{await loadAll();}catch(e){showLock("loading","Impossible de charger vos données. Vérifiez votre connexion puis rouvrez l'outil.");}
@@ -1084,10 +1117,14 @@ async function rekey(newKey,newLock){
   // tout est en mémoire et déchiffré : on réécrit avec la nouvelle clé (ou en clair)
   const list=await backend.listJ();const docs=[];
   for(const x of list){try{docs.push({id:x.id,d:await unseal(x.raw,KEY)});}catch(e){}}
+  const autres=[];for(const w of PF.list){if(w.id===PF.cur)continue;const b=makeBackend(w.id);const o={b,et:null,docs:[]};
+    try{const raw=await b.getEtat();if(raw)o.et=await unseal(raw,KEY);}catch(e){}
+    for(const x of await b.listJ()){try{o.docs.push({id:x.id,d:await unseal(x.raw,KEY)});}catch(e){}}autres.push(o);}
   await backend.setLock(newLock);
   KEY=newKey;LOCK=newLock;
   await backend.setEtat(await pack(S));
   for(const x of docs)await backend.setJ(x.id,await pack(x.d));
+  for(const o of autres){if(o.et)await o.b.setEtat(await pack(o.et));for(const x of o.docs)await o.b.setJ(x.id,await pack(x.d));}
 }
 async function newLockFor(pw){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));const iter=250000;const k=await deriveKey(pw,salt,iter);return{k,lock:{salt,iter,check:await seal({ok:"bka"},k),v:1}};}
 let lastAct=Date.now(),hiddenAt=0;
@@ -1095,7 +1132,7 @@ function bindLock(){
   $("f-unlock").addEventListener("submit",e=>{e.preventDefault();const pw=$("u-pw").value;if(pw)unlock(pw);});
   $("u-forgot").onclick=()=>{$("u-reset").hidden=false;};
   $("u-reset-btn").onclick=async()=>{if($("u-reset-txt").value.trim().toUpperCase()!=="EFFACER"){$("u-err").textContent="Tapez EFFACER pour confirmer.";return;}
-    try{if(bioOK())await bioDisable();const l=await backend.listJ();for(const x of l)await backend.delJ(x.id);await backend.setLock(null);LOCK=null;KEY=null;S=defaults();ready=true;await backend.setEtat(plain(S));$("u-reset-txt").value="";await loadAll();}catch(e){$("u-err").textContent="L'effacement a échoué. Vérifiez votre connexion.";}};
+    try{if(bioOK())await bioDisable();for(const w of PF.list){if(w.id===PF.cur)continue;try{await pfWipe(w.id);}catch(e){}}if(PF.cur!=="main"){try{await pfWipe(PF.cur);}catch(e){}backend=makeBackend("main");}PF={list:[{id:"main",nom:"Principal"}],cur:"main"};try{await backend.setMeta(PF);}catch(e){}const l=await backend.listJ();for(const x of l)await backend.delJ(x.id);await backend.setLock(null);LOCK=null;KEY=null;S=defaults();ready=true;await backend.setEtat(plain(S));$("u-reset-txt").value="";await loadAll();}catch(e){$("u-err").textContent="L'effacement a échoué. Vérifiez votre connexion.";}};
   const msg=(t,ok)=>{$("l-msg").textContent=t;$("l-msg").style.color=ok?"var(--ok)":"var(--crit)";};
   $("f-lock-on").addEventListener("submit",async e=>{e.preventDefault();const a=$("l-pw1").value,b=$("l-pw2").value;
     if(a.length<8)return msg("Le mot de passe doit faire au moins 8 caractères.");if(a!==b)return msg("Les deux mots de passe ne correspondent pas.");
@@ -1224,6 +1261,8 @@ function bindScan(){
 // ---------- sauvegarde ----------
 async function exportData(){
   const sx=plain(S);delete sx.cleApi;const body={S:sx,J:J.map(e=>{const o=Object.assign({},e);delete o.id;return o;})};
+  if(PF.list.length>1){body.pf={list:plain(PF.list),cur:PF.cur};body.autres={};
+    for(const w of PF.list){if(w.id===PF.cur)continue;const d=await pfLoad(w.id);if(!d)continue;const s2=plain(d.S);delete s2.cleApi;body.autres[w.id]={S:s2,J:d.J.map(e=>{const o=Object.assign({},e);delete o.id;return o;})};}}
   const out={app:"mon-budget",v:1,at:new Date().toISOString()};
   if(KEY&&LOCK){out.lock={salt:LOCK.salt,iter:LOCK.iter};out.payload=await seal(body,KEY);}else out.payload=body;
   return JSON.stringify(out);
@@ -1236,6 +1275,12 @@ async function importData(txt,pw){
   const old=await backend.listJ();for(const x of old)await backend.delJ(x.id);
   S=d;ready=true;await backend.setEtat(await pack(S));
   for(const e of (body.J||[]))await backend.addJ(await pack(e));
+  if(body.pf&&Array.isArray(body.pf.list)&&body.autres){const cur=PF.cur;
+    for(const w of body.pf.list){if(w.id===body.pf.cur)continue;const a=body.autres[w.id];if(!a)continue;const id=w.id===cur?"w"+Date.now().toString(36):w.id;const b=makeBackend(id);
+      const ds=migrate(a.S);if(!ds)continue;for(const x of await b.listJ())await b.delJ(x.id);await b.setEtat(await pack(ds));for(const e of (a.J||[]))await b.addJ(await pack(e));
+      const nom=w.nom||"Portefeuille";const ex=PF.list.find(x=>x.id===id);if(ex)ex.nom=nom;else PF.list.push({id,nom});}
+    const me=body.pf.list.find(x=>x.id===body.pf.cur);if(me){const ex=PF.list.find(x=>x.id===cur);if(ex)ex.nom=me.nom;}
+    await pfSaveMeta();}
   renderAll();
 }
 function bindBackup(){
@@ -1370,7 +1415,7 @@ const today=()=>isoD(new Date());
 const fmtM=(m,d)=>typeof fmtDev==="function"?fmtDev(m,d):usd(m);
 function devOpts(){const pd=$("pl-dev");return pd?[...pd.options].map(o=>[o.value,o.textContent]):[["USD","USD"]];}
 function renderToday(c){
-  if(!$("t-reste"))return;
+  if(!$("t-reste"))return;pfRenderBar();
   const jm=journalMois(c),pl=planMois(c,jm),P=pl.P;
   const bud=pl.vars.reduce((a,v)=>a+v.budget,0),sp=pl.vars.reduce((a,v)=>a+v.spent,0);
   $("t-reste").textContent=usd(pl.resteVar);
@@ -1454,6 +1499,78 @@ function checkBilan(){
   const done=add=>{if(add>0)S.epargneDispo=Math.round(((+S.epargneDispo||0)+add)*100)/100;S.bilanVu=P.startISO;closeSheet("sh-bilan");changed();if(add>0)showToast(usd(add)+" ajoutés à votre épargne.");};
   if($("sb-save"))$("sb-save").onclick=()=>done(reste);$("sb-keep").onclick=()=>done(0);
 }
+// ---------- portefeuilles ----------
+function makeBackend(w){return BK?dbBackend(BK.db,BK.uid,w):localBackend(w);}
+function pfName(id){const w=PF.list.find(x=>x.id===(id||PF.cur));return w?w.nom:"Principal";}
+async function pfSaveMeta(){try{await backend.setMeta(plain(PF));}catch(e){}}
+async function pfFlush(){clearTimeout(saveT);if(!ready||locked()||!backend)return;for(let i=0;i<60&&saving;i++)await new Promise(r=>setTimeout(r,50));try{await backend.setEtat(await pack(S));}catch(e){}}
+async function pfLoad(id){if(id===PF.cur)return{S,J};const b=makeBackend(id);let d=null;try{const raw=await b.getEtat();if(raw)d=migrate(await unseal(raw,KEY));}catch(e){}
+  if(!d)return null;const jj=[];for(const x of await b.listJ()){try{const e=await unseal(x.raw,KEY);if(e)jj.push(Object.assign({},e,{id:x.id}));}catch(e){}}return{S:d,J:jj};}
+async function pfWipe(id){const b=makeBackend(id);for(const x of await b.listJ())await b.delJ(x.id);await b.delEtat();}
+function pfBlank(){const d=defaults();const keep=["v","taux","tauxCDF","jourPaie","dimeBase","dimeLieu","monnaie","legacyFx","cleApi"];keep.forEach(k=>{if(S&&S[k]!==undefined)d[k]=plain({x:S[k]}).x;});
+  d.revenus=[];d.charges=[];d.projets=[];d.postesPerso=[];d.epargneDispo=0;d.dimePct=0;d.sousBudget=Object.fromEntries(Object.keys(d.sousBudget).map(k=>[k,0]));d.onboarded=false;delete d.bilanVu;return d;}
+async function pfSwitch(id,fresh){if(id===PF.cur&&!fresh)return;if(locked())return;
+  await pfFlush();if(jUnsub){jUnsub();jUnsub=null;}
+  const blank=pfBlank();PF.cur=id;await pfSaveMeta();backend=makeBackend(id);ready=false;S=blank;J=[];
+  document.querySelectorAll("#verdict,#ai-out,#q-out").forEach(el=>{el.innerHTML="";});
+  await loadAll();closeSheet("sh-pf");location.hash="#aujourdhui";window.scrollTo(0,0);
+  if(!S.revenus.some(r=>+r.montant>0)&&!S.onboarded&&typeof wzOpen==="function")wzOpen();
+  else{showToast("Portefeuille « "+pfName()+" »");checkBilan();}}
+async function pfCreate(nom){nom=(nom||"").trim().slice(0,40);if(!nom)return false;
+  const id="w"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);PF.list.push({id,nom});await pfSwitch(id,true);return true;}
+function pfRenderBar(){
+  const n=$("h-pf-n");if(n)n.textContent=pfName();
+  const bar=$("t-pf");if(!bar)return;if(PF.list.length<2){bar.hidden=true;return;}bar.hidden=false;
+  bar.innerHTML=PF.list.map(w=>'<button type="button" data-pfgo="'+esc(w.id)+'" aria-pressed="'+(w.id===PF.cur)+'">'+esc(w.nom)+'</button>').join("")+'<button type="button" data-pfall>Vue d\'ensemble</button>';}
+let pfEdit=null,pfDel=null;
+async function pfRenderSheet(){
+  const L=$("pf-list");if(!L)return;const one=PF.list.length<2;
+  L.innerHTML=PF.list.map(w=>{const on=w.id===PF.cur;
+    if(pfEdit===w.id)return '<div class="pfrow'+(on?" on":"")+'"><label class="small" for="pf-ren">Nouveau nom</label><input id="pf-ren" maxlength="40" value="'+esc(w.nom)+'"><div class="act"><button type="button" class="pri" data-pfsave="'+esc(w.id)+'">Enregistrer</button><button type="button" data-pfcancel>Annuler</button></div></div>';
+    if(pfDel===w.id)return '<div class="pfrow'+(on?" on":"")+'"><b>Supprimer « '+esc(w.nom)+' » ?</b><p class="small muted">Ses revenus, charges, dépenses et projets seront effacés de cet appareil. Les autres portefeuilles ne changent pas.</p><div class="act"><button type="button" class="dang" data-pfdelok="'+esc(w.id)+'">Oui, supprimer</button><button type="button" data-pfcancel>Annuler</button></div></div>';
+    return '<div class="pfrow'+(on?" on":"")+'"><div class="l1"><b>'+esc(w.nom)+'</b>'+(on?'<span class="small" style="color:var(--accent);font-weight:600">ouvert</span>':'')+'</div><div class="small muted" data-pfsum="'+esc(w.id)+'">…</div>'+
+      '<div class="act">'+(on?'':'<button type="button" class="pri" data-pfgo="'+esc(w.id)+'">Ouvrir</button>')+'<button type="button" data-pfren="'+esc(w.id)+'">Renommer</button>'+(one?'':'<button type="button" class="dang" data-pfdel="'+esc(w.id)+'">Supprimer</button>')+'</div></div>';}).join("");
+  // résumés et total
+  const sums=await pfSummaries();let tot=null;
+  sums.forEach(x=>{const el=L.querySelector('[data-pfsum="'+x.id+'"]');if(el)el.innerHTML=x.html;});
+  const T=$("pf-tot");if(!T)return;
+  if(one){T.innerHTML="";return;}
+  const byCur={};sums.forEach(x=>{if(!x.ok)return;const k=x.cur;byCur[k]=byCur[k]||{rev:0,reste:0,ep:0,fmt:x.fmt};byCur[k].rev+=x.rev;byCur[k].reste+=x.reste;byCur[k].ep+=x.ep;});
+  T.innerHTML='<div class="panel" style="display:flex;flex-direction:column;gap:8px"><h3>Vue d\'ensemble</h3>'+Object.values(byCur).map(v=>
+    '<div style="display:flex;justify-content:space-between;gap:8px"><span>Revenus du mois</span><b>'+esc(v.fmt(v.rev))+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;gap:8px"><span>Reste jusqu\'à la paie</span><b>'+esc(v.fmt(v.reste))+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;gap:8px"><span>Épargne mise de côté</span><b>'+esc(v.fmt(v.ep))+'</b></div>').join('<hr style="border:0;border-top:1px solid var(--line);margin:4px 0">')+
+    '<p class="small muted">Total de tous vos portefeuilles. Chaque portefeuille garde son propre budget.</p></div>';
+}
+async function pfSummaries(){const out=[];const S0=S,J0=J;
+  for(const w of PF.list){let d=null;try{d=await pfLoad(w.id);}catch(e){}
+    if(!d){out.push({id:w.id,ok:false,html:"Pas encore de chiffres"});continue;}
+    try{S=d.S;J=d.J;const c=calc();const jm=journalMois(c),pl=planMois(c,jm);
+      const cur=typeof curCode==="function"?curCode():"USD";const f=usd;const fmt=v=>{const S1=S;S=d.S;const t=f(v);S=S1;return t;};
+      const rev=c.rev,reste=pl.resteVar,ep=+S.epargneDispo||0;
+      out.push({id:w.id,ok:rev>0,cur,rev,reste,ep,fmt,html:rev>0?'Revenus '+esc(usd(rev))+' · reste '+esc(usd(reste))+' jusqu\'à la paie':'Pas encore de chiffres'});}
+    catch(e){out.push({id:w.id,ok:false,html:"Pas encore de chiffres"});}
+    finally{S=S0;J=J0;}}
+  return out;}
+function bindPf(){
+  const open=()=>{if(locked())return;pfEdit=null;pfDel=null;$("pf-msg").textContent="";openSheet("sh-pf");pfRenderSheet();};
+  $("h-pf").addEventListener("click",open);
+  $("pf-x").addEventListener("click",()=>closeSheet("sh-pf"));
+  $("sh-pf").addEventListener("click",async e=>{if(e.target.id==="sh-pf"){closeSheet("sh-pf");return;}
+    const t=e.target.closest("button");if(!t)return;const d=t.dataset;
+    if(d.pfgo){await pfSwitch(d.pfgo);return;}
+    if(d.pfren){pfEdit=d.pfren;pfDel=null;await pfRenderSheet();const i=$("pf-ren");if(i){i.focus();i.select();}return;}
+    if(d.pfdel){pfDel=d.pfdel;pfEdit=null;pfRenderSheet();return;}
+    if(d.pfcancel!==undefined){pfEdit=null;pfDel=null;pfRenderSheet();return;}
+    if(d.pfsave){const v=($("pf-ren").value||"").trim().slice(0,40);if(v){PF.list.find(x=>x.id===d.pfsave).nom=v;await pfSaveMeta();}pfEdit=null;pfRenderBar();pfRenderSheet();return;}
+    if(d.pfdelok){const id=d.pfdelok;if(PF.list.length<2)return;const nom=pfName(id);
+      if(id===PF.cur){const other=PF.list.find(x=>x.id!==id).id;await pfSwitch(other);}
+      try{await pfWipe(id);}catch(e){}PF.list=PF.list.filter(x=>x.id!==id);await pfSaveMeta();pfDel=null;pfRenderBar();openSheet("sh-pf");pfRenderSheet();showToast("« "+nom+" » supprimé.");return;}});
+  $("sh-pf").addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet("sh-pf");if(e.key==="Enter"&&e.target.id==="pf-ren"){e.preventDefault();const b=$("sh-pf").querySelector("[data-pfsave]");if(b)b.click();}});
+  $("pf-new").addEventListener("submit",async e=>{e.preventDefault();const v=$("pf-nom").value.trim();if(!v){$("pf-msg").textContent="Donnez un nom au portefeuille.";return;}
+    if(PF.list.length>=12){$("pf-msg").textContent="12 portefeuilles au maximum.";return;}$("pf-nom").value="";await pfCreate(v);});
+  $("t-pf").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;if(t.dataset.pfgo)pfSwitch(t.dataset.pfgo);else if(t.dataset.pfall!==undefined)open();});
+}
 // --- assistant de démarrage ---
 const PRESETS=[["Loyer","logement"],["Électricité et eau","logement"],["Aide à la famille","famille"],["Crédit ou remboursement","dette"],["École des enfants","autre"],["Téléphone et internet","abonnements"],["Église, tontine ou épargne","eglise"]];
 let WZ=null;
@@ -1462,6 +1579,7 @@ function wzOpen(){if(locked())return;const dv=(S.revenus[0]&&S.revenus[0].devise
     rev:S.revenus.map(r=>({id:r.id,label:r.label,montant:+r.montant||0,devise:r.devise,lieu:r.lieu})),
     chg:S.charges.filter(c=>c.cat!=="courant").map(c=>({id:c.id,label:c.label,montant:+c.montant||0,cat:c.cat,devise:c.devise,lieu:c.lieu,on:true})),
     sb:Object.assign({},S.sousBudget),lock:false,fresh:!S.revenus.some(r=>+r.montant>0)};
+  if(Object.keys(SBCATS).every(k=>!+WZ.sb[k]))WZ.sb=Object.assign({},WZ.sb,typeof sbFor==="function"?sbFor(curCode()):SB_DEFAULT);
   if(!WZ.rev.length)WZ.rev.push({id:nid(),label:"Salaire",montant:0,devise:dv,lieu:"kin"});
   PRESETS.forEach(([l,cat])=>{if(!WZ.chg.some(c=>c.label.toLowerCase()===l.toLowerCase()))WZ.chg.push({id:nid(),label:l,montant:0,cat,devise:dv,lieu:"kin",on:false});});
   $("wiz").hidden=false;document.body.style.overflow="hidden";wzRender();}
@@ -1575,7 +1693,8 @@ const TOUR=[
  {t:"projets",sel:"#f-avis",h:"5. Est-ce raisonnable ?",p:"Avant un achat important, décrivez-le ici : l'application donne un verdict et une autre solution si ce n'est pas le moment."},
  {t:"projets",sel:"#f-obj",h:"6. Objectif et projets",p:"Votre objectif d'épargne mensuel et vos projets, avec la date à laquelle chacun sera financé."},
  {t:"conseils",sel:"#ct-list",h:"7. Conseils",p:"Les gestes qui rapportent le plus, le plus important en premier. En dessous : plafonds de la semaine, placements et bilan détaillé."},
- {t:"parametres",sel:"[data-view=parametres] .panel",h:"8. Réglages",p:"La roue dentée en haut ouvre vos réglages : monnaie, jour de paie, revenus, charges, mot de passe, sauvegarde. Vous pouvez y relancer l'assistant de démarrage."},
+ {t:"aujourdhui",sel:"#h-pf",h:"8. Plusieurs portefeuilles",p:"Le bouton 👛 en haut ouvre vos portefeuilles : créez-en un pour le ménage, une activité, un projet ou l'argent d'un proche, renommez-les, et passez de l'un à l'autre. Chacun a son budget ; la vue d'ensemble additionne tout."},
+ {t:"parametres",sel:"[data-view=parametres] .panel",h:"9. Réglages",p:"La roue dentée en haut ouvre vos réglages : monnaie, jour de paie, revenus, charges, mot de passe, sauvegarde. Vous pouvez y relancer l'assistant de démarrage."},
  {t:"aujourdhui",sel:null,h:"C'est parti !",p:"Le jour de la paie, un bilan de la période s'affichera et vous proposera de mettre le reste de côté. Bonne gestion !"}];
 let tourI=-1;
 function tourSeen(){try{return localStorage.getItem("mbp-demo2")==="1";}catch(e){return true;}}
@@ -1602,7 +1721,7 @@ function bindTour(){
 }
 bindSettings();bindConseils();bindProjets();bindJournal();bindAvis();route();renderAll();
 $("f-avis").requestSubmit();
-bindLock();bindBackup();bindBio();bindScan();bindParcours();bindTour();bindBase();start();
+bindLock();bindBackup();bindBio();bindScan();bindPf();bindParcours();bindTour();bindBase();start();
 })();
 </script>
 
