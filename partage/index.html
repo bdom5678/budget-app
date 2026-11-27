@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: registre de trésorerie à deux comptes (Kin / Abidjan), onglets, colonne principale + rail d'alertes */
+/* Layout: registre de trésorerie, onglets, colonne principale + rail d'alertes */
 :root{
   --bg:#f5f7f6; --surface:#ffffff; --sunk:#eaf0ee; --line:#d5dfdb;
   --ink:#14211e; --muted:#5a6b66; --accent:#0e5c50; --accent-ink:#ffffff; --ochre:#b7791f;
@@ -185,7 +185,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
     </div>
     <div class="meta">
       <span class="pill">Paie dans <b id="h-mois"></b></span>
-      <span class="pill">1 USD = <b id="h-taux" class="num"></b> F CFA</span>
+      <span class="pill">1 USD = <b id="h-taux" class="num"></b> FC</span>
       <span class="pill" id="h-save">Enregistrement local</span>
     </div>
   </header>
@@ -235,11 +235,11 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
       <div class="panel">
         <header><h2>Je veux dépenser… est-ce raisonnable ?</h2></header>
         <form class="f" id="f-avis">
-          <div class="fld full"><label for="a-label">Quelle dépense ?</label><input id="a-label" required value="Nouvelle voiture pour Abidjan (exemple)"></div>
-          <div class="fld"><label for="a-montant">Montant</label><input id="a-montant" type="number" min="0" step="any" required value="9000000"></div>
-          <div class="fld"><label for="a-devise">Devise</label><select id="a-devise"><option value="XOF">F CFA</option><option value="USD">USD</option></select></div>
+          <div class="fld full"><label for="a-label">Quelle dépense ?</label><input id="a-label" required value="Nouvelle voiture (exemple)"></div>
+          <div class="fld"><label for="a-montant">Montant</label><input id="a-montant" type="number" min="0" step="any" required value="15000"></div>
+          <div class="fld"><label for="a-devise">Devise</label><select id="a-devise"><option value="USD">USD</option><option value="CDF">FC</option></select></div>
           <div class="fld"><label>Fréquence</label><div class="seg"><label><input type="radio" name="a-freq" value="unique" checked> Une fois</label><label><input type="radio" name="a-freq" value="mensuel"> Chaque mois</label></div></div>
-          <div class="fld"><label for="a-compte">Payée depuis</label><select id="a-compte"><option value="abj">Compte d'Abidjan</option><option value="kin">Kinshasa</option></select></div>
+          <div class="fld" hidden><label for="a-compte">Payée depuis</label><select id="a-compte"><option value="kin">Mon compte</option></select></div>
           <div class="fld full"><label>Nature</label><div class="seg">
             <label><input type="radio" name="a-nature" value="besoin"> Besoin</label>
             <label><input type="radio" name="a-nature" value="envie" checked> Envie / confort</label>
@@ -259,13 +259,12 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
             <p>Je compare le montant à votre <b>marge libre</b> : ce qui reste chaque mois après toutes les charges et après votre objectif d'épargne.</p>
             <p>Une dépense ponctuelle est raisonnable si elle tient dans la moitié de cette marge. Au-delà, je calcule de combien de mois elle retarde vos projets.</p>
             <p>Une dépense mensuelle est jugée sur ce qu'elle vous laisse chaque mois, et un nouveau crédit sur votre taux d'endettement (seuil 33 %).</p>
-            <p>Si elle est payée à Abidjan, je vérifie que le compte en F CFA peut la couvrir sans transfert depuis Kinshasa.</p>
           </div>
         </div>
         <div class="panel" id="q-panel">
           <header><h3>Poser une question libre</h3></header>
           <form id="f-q" class="stack" style="gap:10px">
-            <textarea id="q-text" aria-label="Votre question">Dois-je rembourser mon frère plus vite ou épargner pour mes projets à Abidjan ?</textarea>
+            <textarea id="q-text" aria-label="Votre question">Dois-je rembourser mon crédit plus vite ou épargner pour mes projets ?</textarea>
             <button class="pri" type="submit" id="q-btn" disabled>Demander à Claude</button>
           </form>
           <div id="q-out" class="ai" hidden></div>
@@ -290,9 +289,9 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
           <header><h2>Projets à financer</h2><span class="muted small">Financés dans l'ordre de la liste</span></header>
           <div id="proj-list"></div>
           <form class="f" id="f-proj" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
-            <div class="fld full"><label for="p-label">Nouveau projet</label><input id="p-label" required placeholder="Ex. Terrain à Bingerville, boutique, immeuble locatif…"></div>
+            <div class="fld full"><label for="p-label">Nouveau projet</label><input id="p-label" required placeholder="Ex. Terrain, boutique, véhicule, études…"></div>
             <div class="fld"><label for="p-cout">Coût</label><input id="p-cout" type="number" min="0" step="any" required></div>
-            <div class="fld"><label for="p-devise">Devise</label><select id="p-devise"><option value="XOF">F CFA</option><option value="USD">USD</option></select></div>
+            <div class="fld"><label for="p-devise">Devise</label><select id="p-devise"><option value="USD">USD</option><option value="CDF">FC</option></select></div>
             <div class="fld"><label for="p-ech">Échéance souhaitée</label><input id="p-ech" type="month" required></div>
             <div class="fld"><label for="p-deja">Déjà épargné pour ce projet</label><input id="p-deja" type="number" min="0" step="any" value="0"></div>
             <div class="actions"><button class="pri" type="submit">Ajouter le projet</button></div>
@@ -346,7 +345,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
           <div id="pl-fixes" class="fixes"></div>
           <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px;margin:18px 0 6px">
             <h3>Dépenses courantes : tapez chaque dépense dans son poste</h3>
-            <div class="fld" style="flex:0 0 auto"><label for="pl-dev">Montants saisis en</label><select id="pl-dev" style="width:auto"><option value="USD">USD</option><option value="CDF">FC</option><option value="XOF">F CFA</option></select></div>
+            <div class="fld" style="flex:0 0 auto"><label for="pl-dev">Montants saisis en</label><select id="pl-dev" style="width:auto"><option value="USD">USD</option><option value="CDF">FC</option></select></div>
           </div>
           <div class="scan-bar">
             <label class="btn pri" for="scan-file">Photographier un ticket</label>
@@ -359,7 +358,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
               <p id="scan-status" class="small" aria-live="polite"></p>
               <form class="f" id="f-scan">
                 <div class="fld"><label for="sc-montant">Montant</label><input id="sc-montant" type="number" min="0" step="any" required></div>
-                <div class="fld"><label for="sc-devise">Devise</label><select id="sc-devise"><option value="USD">USD</option><option value="CDF">FC</option><option value="XOF">F CFA</option></select></div>
+                <div class="fld"><label for="sc-devise">Devise</label><select id="sc-devise"><option value="USD">USD</option><option value="CDF">FC</option></select></div>
                 <div class="fld"><label for="sc-poste">Poste</label><select id="sc-poste"></select></div>
                 <div class="fld"><label for="sc-date">Date</label><input id="sc-date" type="date" required></div>
                 <div class="fld full"><label for="sc-label">Libellé</label><input id="sc-label" required></div>
@@ -383,7 +382,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
           <form class="f" id="f-j">
             <div class="fld full"><label for="j-label">Libellé</label><input id="j-label" required placeholder="Courses, carburant, cadeau…"></div>
             <div class="fld"><label for="j-montant">Montant</label><input id="j-montant" type="number" min="0" step="any" required></div>
-            <div class="fld"><label for="j-devise">Devise</label><select id="j-devise"><option value="USD">USD</option><option value="CDF">FC</option><option value="XOF">F CFA</option></select></div>
+            <div class="fld"><label for="j-devise">Devise</label><select id="j-devise"><option value="USD">USD</option><option value="CDF">FC</option></select></div>
             <div class="fld"><label for="j-cat" id="j-cat-l">Source</label><select id="j-cat"></select></div>
             <div class="fld"><label for="j-date">Date</label><input id="j-date" type="date" required></div>
             <div class="actions"><button class="pri" type="submit">Ajouter la recette</button></div>
@@ -452,12 +451,12 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
       <div class="panel">
         <header><h2>Réglages</h2></header>
         <form class="f" id="f-set" onsubmit="return false">
-          <div class="fld"><label for="s-taux">Taux : 1 USD en F CFA</label><input id="s-taux" type="number" min="1" step="1"></div>
+          <div class="fld" hidden><label for="s-taux">Taux : 1 USD en F CFA</label><input id="s-taux" type="number" min="1" step="1"></div>
           <div class="fld"><label for="s-tauxcdf">Taux : 1 USD en francs congolais (FC)</label><input id="s-tauxcdf" type="number" min="1" step="1"></div>
           <div class="fld"><label for="s-paie">Jour de paie dans le mois</label><input id="s-paie" type="number" min="1" max="31" step="1"></div>
           <div class="fld"><label for="s-dime">Dîme (% des revenus)</label><input id="s-dime" type="number" min="0" max="100" step="0.5"></div>
-          <div class="fld"><label for="s-dimebase">Dîme calculée sur</label><select id="s-dimebase"><option value="total">Tous les revenus</option><option value="kin">Revenus de Kinshasa seulement</option></select></div>
-          <div class="fld"><label for="s-dimelieu">Dîme payée depuis</label><select id="s-dimelieu"><option value="kin">Kinshasa</option><option value="abj">Abidjan</option></select></div>
+          <div class="fld" hidden><label for="s-dimebase">Dîme calculée sur</label><select id="s-dimebase"><option value="total">Tous les revenus</option></select></div>
+          <div class="fld" hidden><label for="s-dimelieu">Dîme payée depuis</label><select id="s-dimelieu"><option value="kin">Mon compte</option></select></div>
         </form>
       </div>
       <div class="panel">
@@ -481,20 +480,19 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
 const CATS={dette:"Remboursement de dettes",logement:"Logement",famille:"Soutien familial",epargne:"Assurances & épargne",eglise:"Église & dîme",courant:"Vie courante",abonnements:"Abonnements IA, internet, TV",autre:"Autres charges"};
 const CATCOL={dette:"--c5",logement:"--c4",famille:"--c3",epargne:"--c6",eglise:"--c2",courant:"--c7",abonnements:"--c9",autre:"--c8"};
 const SBCATS={alimentation:"Courses & alimentation",transport:"Carburant & transport",sorties:"Restaurants & sorties",maison:"Maison & personnel",divers:"Divers & dons ponctuels"};
-const JCATS=Object.assign({},SBCATS,{famille:"Famille (hors envoi fixe)",sante:"Santé",projet:"Projet Abidjan",autre:"Autre imprévu"});
+const JCATS=Object.assign({},SBCATS,{famille:"Famille (hors envoi fixe)",sante:"Santé",projet:"Projet",autre:"Autre imprévu"});
 const RCATS={formation:"Formation",actuariat:"Mission d'actuariat",prime:"Prime ou bonus",autre_r:"Autre recette"};
 const ppLabels=()=>{const o={};((typeof S!=="undefined"&&S.postesPerso)||[]).forEach(pp=>o["pp_"+pp.id]=pp.label);return o;};
 const catLabel=k=>k==="fixe"?"Charge fixe":(JCATS[k]||ppLabels()[k]||(String(k).startsWith("pp_")?"Poste supprimé":k));
 const SB_DEFAULT={alimentation:130,transport:75,sorties:50,maison:70,divers:25};
 const W2M=52/12;
-const LIEUX={kin:"Kinshasa",abj:"Abidjan"};
+const LIEUX={kin:"Mon compte"};
 let uid=0; const nid=()=>Date.now().toString(36)+(uid++).toString(36);
 
 function defaults(){return{
   v:2,taux:580,tauxCDF:2800,jourPaie:25,dimePct:0,dimeBase:"total",dimeLieu:"kin",
   revenus:[
-    {id:"r1",label:"Salaire",montant:0,devise:"USD",lieu:"kin"},
-    {id:"r2",label:"Revenu versé à Abidjan",montant:0,devise:"USD",lieu:"abj"}],
+    {id:"r1",label:"Salaire",montant:0,devise:"USD",lieu:"kin"}],
   charges:[
     {id:"c1",label:"Loyer",montant:0,devise:"USD",lieu:"kin",cat:"logement"},
     {id:"c2",label:"Dépenses courantes",montant:0,devise:"USD",lieu:"kin",cat:"courant"}],
@@ -522,7 +520,7 @@ let J=[]; // journal entries
 const nf0=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0});
 const nf1=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:1});
 const usd=v=>nf0.format(Math.round(v))+" USD";
-const xof=v=>nf0.format(Math.round(v/1000)*1000)+" F CFA";
+const xof=v=>nf0.format(Math.round(v/(+S.taux||580)*(+S.tauxCDF||2800)/100)*100)+" FC";
 const pct=v=>nf1.format(v*100)+" %";
 const toUSD=(m,d)=>d==="XOF"?(+m||0)/S.taux:d==="CDF"?(+m||0)/(+S.tauxCDF||2800):(+m||0);
 const fmtDev=(m,d)=>d==="XOF"?xof(m):d==="CDF"?nf0.format(Math.round(m))+" FC":usd(m);
@@ -574,13 +572,11 @@ function alertes(c){
   const A=[];
   if(c.reste<0)A.push({s:"crit",t:"Vos charges dépassent vos revenus",p:"Il manque "+usd(-c.reste)+" chaque mois. Il faut réduire une charge avant toute nouvelle dépense."});
   else if(c.reste<c.rev*0.1)A.push({s:"warn",t:"Marge mensuelle trop mince",p:"Il ne reste que "+usd(c.reste)+" par mois, soit "+pct(c.reste/c.rev)+" des revenus. Visez au moins 15 %."});
-  else A.push({s:"ok",t:"Vous dégagez "+usd(c.reste)+" par mois",p:"Soit "+pct(c.reste/c.rev)+" de vos revenus après toutes les charges. C'est une vraie capacité d'investissement pour Abidjan, à condition de la flécher."});
+  else A.push({s:"ok",t:"Vous dégagez "+usd(c.reste)+" par mois",p:"Soit "+pct(c.reste/c.rev)+" de vos revenus après toutes les charges. C'est une vraie capacité d'investissement, à condition de la flécher."});
   if(c.marge<0&&c.reste>0)A.push({s:"warn",t:"Objectif d'épargne trop ambitieux",p:"Votre objectif ("+usd(c.objectif)+") dépasse ce qui reste ("+usd(c.reste)+"). Ramenez-le à "+usd(Math.floor(c.reste*0.9/50)*50)+" pour garder un coussin."});
   if(c.endettement>0.33)A.push({s:"crit",t:"Endettement au-dessus de 33 %",p:"Les dettes prennent "+pct(c.endettement)+" de vos revenus. Aucun nouveau crédit."});
-  else if(c.endettement>0.2)A.push({s:"warn",t:"Endettement à surveiller",p:pct(c.endettement)+" des revenus partent en remboursements. Évitez un nouveau crédit avant d'avoir soldé celui de votre frère."});
-  else A.push({s:"ok",t:"Endettement maîtrisé",p:"Les remboursements (banque et frère) font "+usd(c.byCat.dette)+", soit "+pct(c.endettement)+" des revenus, sous le seuil de 33 %."});
-  if(c.soldeAbj<0)A.push({s:"crit",t:"Le compte d'Abidjan est déficitaire",p:"Il sort "+xof(-c.soldeAbj*S.taux)+" de plus qu'il n'entre chaque mois. Prévoyez un transfert régulier depuis Kinshasa."});
-  else if(c.soldeAbj<c.revAbj*0.15)A.push({s:"warn",t:"Abidjan presque entièrement engagé",p:"Sur "+xof(c.revAbj*S.taux)+" reçus à Abidjan, il ne reste que "+xof(c.soldeAbj*S.taux)+". Tout projet à Abidjan devra être financé par l'excédent de Kinshasa ("+usd(c.soldeKin)+")."});
+  else if(c.endettement>0.2)A.push({s:"warn",t:"Endettement à surveiller",p:pct(c.endettement)+" des revenus partent en remboursements. Évitez un nouveau crédit avant d'avoir soldé les crédits en cours."});
+  else A.push({s:"ok",t:"Endettement maîtrisé",p:"Les remboursements font "+usd(c.byCat.dette)+", soit "+pct(c.endettement)+" des revenus, sous le seuil de 33 %."});
   const ab=c.byCat.abonnements;
   if(c.rev&&ab/c.rev>0.03)A.push({s:"warn",t:"Abonnements élevés : "+usd(ab*12)+" par an",p:"Faites l'inventaire IA, internet et TV. Supprimer les doublons libère souvent 100 à 150 USD par mois."});
   const o=optim(c);
@@ -658,15 +654,13 @@ function evaluer(inp,c){
       if(n<=3){score=34;B.push("Elle représente "+nf1.format(m/c.reste)+" mois de tout votre excédent.");alt="Étalez-la : mettez "+usd(m/n)+" de côté pendant "+n+" mois, puis payez comptant.";}
       else{score=14;B.push("Elle représente "+(n===Infinity?"plus que":nf1.format(m/c.reste)+" mois de")+" tout votre excédent mensuel.");alt="Faites-en un projet dans l'onglet Projets : avec "+usd(c.capacite)+" par mois, elle serait financée en "+(c.capacite>0?Math.ceil(m/c.capacite)+" mois":"un délai indéterminé")+".";}}
     if(c.capacite>0&&m>marge)B.push("Elle retarde vos projets d'environ "+nf1.format((m-marge)/c.capacite)+" mois.");
-    if(inp.compte==="abj"&&m>Math.max(c.soldeAbj,0))B.push("Le compte d'Abidjan ne dégage que "+xof(Math.max(c.soldeAbj,0)*S.taux)+" par mois : il faudra un transfert depuis Kinshasa (comptez les frais de change).");
   }else{
     const nr=c.reste-m;
     B.push("Coût annuel : "+usd(m*12)+" ("+xof(m*12*S.taux)+").");
     if(nr>=c.objectif){score=80;B.push("Après elle, il vous resterait "+usd(nr)+" par mois : l'objectif de "+usd(c.objectif)+" reste tenable.");}
     else if(nr>=c.objectif*0.5){score=50;B.push("Votre excédent passerait à "+usd(nr)+" : il faudrait réduire l'objectif d'épargne de "+usd(c.objectif-nr)+".");}
-    else if(nr>0){score=24;B.push("Il ne vous resterait que "+usd(nr)+" par mois : vos projets à Abidjan seraient presque à l'arrêt.");}
+    else if(nr>0){score=24;B.push("Il ne vous resterait que "+usd(nr)+" par mois : vos projets seraient presque à l'arrêt.");}
     else{score=5;B.push("Vous seriez en déficit de "+usd(-nr)+" chaque mois.");}
-    if(inp.compte==="abj"&&m>Math.max(c.soldeAbj,0))B.push("Le compte d'Abidjan ne peut pas la porter seul ("+xof(Math.max(c.soldeAbj,0)*S.taux)+" de solde mensuel).");
   }
   if(inp.nature==="envie"){if(score<80)score-=8;B.push("C'est une envie : appliquez la règle des 72 heures avant de payer. Si l'envie tient, achetez.");}
   if(inp.nature==="besoin"){score+=6;B.push("C'est un besoin : la question est surtout de trouver l'option la moins chère, pas de renoncer.");}
@@ -679,7 +673,7 @@ function evaluer(inp,c){
     B.push("Endettement après ce crédit : "+pct(ne)+".");
     if(ne>0.33){score=Math.min(score,15);B.push("C'est au-dessus du seuil de 33 % : je déconseille.");}
     else if(ne>0.25)score-=10;
-    if(!alt)alt="Soldez d'abord le crédit de votre frère : cela libère "+xof(300000)+" par mois sans coût.";}
+    if(!alt)alt="Soldez d'abord un crédit en cours : cela libère sa mensualité sans coût.";}
   score=Math.max(0,Math.min(100,Math.round(score)));
   const verdict=score>=70?{s:"ok",l:"Raisonnable"}:score>=40?{s:"warn",l:"Possible, avec prudence"}:{s:"crit",l:"Pas maintenant"};
   return{m,score,verdict,B,alt};
@@ -711,20 +705,16 @@ function renderConseils(c){
     ["Carburant et transport : plafonnez à "+usd(+S.sousBudget.transport||0)+" par semaine","Regroupez les courses et les rendez-vous par zone, et suivez le plein dans le Journal. Si un chauffeur ou un véhicule tourne sans vous, c'est souvent là que part l'argent."],
     ["Restaurants et sorties : un budget fixe, pas une interdiction","Gardez le plaisir, mais dans l'enveloppe. Deux sorties bien choisies par semaine coûtent moins que cinq improvisées."],
     ["Abonnements : de "+usd(c.byCat.abonnements)+" à "+usd(ABO_CIBLE)+" par mois","Gardez un seul assistant IA payant, un seul bouquet TV, et renégociez l'internet (offre pro ou engagement annuel). Gain : "+usd(o.gainAbo)+" par mois."],
-    ["Les dons et aides imprévus","Les demandes ponctuelles de proches s'ajoutent vite aux 700 000 F CFA déjà envoyés. Fixez-vous un montant mensuel pour ces aides et notez-les dans le Journal (poste Famille) : au-delà, la réponse est « le mois prochain »."]];
+    ["Les dons et aides imprévus","Les demandes ponctuelles de proches s'ajoutent vite aux aides déjà prévues. Fixez-vous un montant mensuel pour ces aides et notez-les dans le Journal (poste Famille) : au-delà, la réponse est « le mois prochain »."]];
   $("opt-tips").innerHTML=tips.map(t=>'<div><h3>'+esc(t[0])+'</h3><p class="small muted" style="margin-top:3px">'+esc(t[1])+'</p></div>').join("");
   const cap=Math.max(0,Math.min(o.resteOpt*0.9,Math.max(c.objectif,o.resteOpt*0.8)));
   $("inv-cap").textContent="Calculé sur "+usd(cap)+" investis par mois";
   const INV=[
-    {lieu:"Abidjan",nom:"Actions de la BRVM",risque:"warn",rl:"Risque moyen",rend:"Dividendes souvent de 6 à 9 % par an sur les grandes valeurs",pts:["Ouvrez un compte titres auprès d'une SGI agréée par l'AMF-UMOA (la plupart des grandes banques ivoiriennes en ont une).","Achetez chaque mois, quel que soit le cours, quelques valeurs solides qui versent des dividendes (télécoms, banques).","Le F CFA est arrimé à l'euro : vous diversifiez hors du dollar et du franc congolais."],part:0.25},
-    {lieu:"Abidjan",nom:"Obligations d'État et emprunts UEMOA",risque:"ok",rl:"Risque faible",rend:"Coupons d'environ 6 à 7,5 % par an selon les émissions récentes",pts:["Souscrivez aux emprunts par appel public à l'épargne de l'État de Côte d'Ivoire ou de la sous-région, via votre SGI ou votre banque.","Revenu régulier et prévisible : idéal pour la partie prudente de votre épargne.","Un fonds commun de placement obligataire est plus simple si vous ne voulez rien suivre."],part:0.20},
-    {lieu:"Abidjan",nom:"Terrain puis logements locatifs",risque:"warn",rl:"Risque moyen, long terme",rend:"Loyers bruts souvent de 7 à 10 % par an une fois construit",pts:["N'achetez qu'un terrain doté d'un ACD (arrêté de concession définitive), vérifié au cadastre et chez un notaire. C'est la première cause de pertes à Abidjan.","Les zones en croissance (Bingerville, Songon, Grand-Bassam, Anyama) restent plus accessibles que Cocody ou la Riviera.","Construisez par phases, financées par l'épargne, et confiez la gestion locative à une agence plutôt qu'à un proche."],part:0.35},
-    {lieu:"Kinshasa",nom:"Dépôt à terme en USD",risque:"ok",rl:"Risque faible",rend:"Taux à négocier, souvent quelques % par an",pts:["Placez-y votre fonds de sécurité : disponible en quelques semaines, en dollars, sans risque de change.","Négociez le taux avec votre banque actuelle en mettant en avant vos domiciliations de salaire."],part:0},
-    {lieu:"Kinshasa",nom:"Vos compétences : un revenu annexe",risque:"ok",rl:"Meilleur rendement",rend:"Quelques centaines de USD investis peuvent rapporter plusieurs milliers",pts:["Transformez votre savoir-faire en service payant : conseil, formation, prestations le soir ou le week-end.","Investissez dans un outil, une formation ou une certification : c'est souvent le placement au retour le plus rapide.","Chaque 500 USD de revenu annexe en plus finance un projet beaucoup plus vite."],part:0.10},
-    {lieu:"Kinshasa",nom:"Immobilier locatif à Kinshasa",risque:"crit",rl:"Risque élevé",rend:"Loyers élevés en USD, mais titres fonciers fragiles",pts:["Seulement avec un certificat d'enregistrement vérifié au service des titres immobiliers, et un avocat.","Plus intéressant plus tard, une fois le fonds de sécurité et le premier projet d'Abidjan en place."],part:0.10}];
+    {lieu:"Sécurité",nom:"Dépôt à terme en USD",risque:"ok",rl:"Risque faible",rend:"Taux à négocier, souvent quelques % par an",pts:["Placez-y votre fonds de sécurité : disponible en quelques semaines, en dollars, sans risque de change.","Négociez le taux avec votre banque actuelle en mettant en avant la domiciliation de votre salaire.","Une fois le fonds de sécurité atteint, continuez à y verser la partie prudente de votre épargne."],part:0.45},
+    {lieu:"Revenus",nom:"Vos compétences : un revenu annexe",risque:"ok",rl:"Meilleur rendement",rend:"Quelques centaines de USD investis peuvent rapporter plusieurs milliers",pts:["Transformez votre savoir-faire en service payant : conseil, formation, prestations le soir ou le week-end.","Investissez dans un outil, une formation ou une certification : c'est souvent le placement au retour le plus rapide.","Chaque 500 USD de revenu annexe en plus finance un projet beaucoup plus vite."],part:0.25},
+    {lieu:"Long terme",nom:"Immobilier locatif",risque:"crit",rl:"Risque élevé",rend:"Loyers élevés en USD, mais titres fonciers fragiles",pts:["Seulement avec un certificat d'enregistrement vérifié au service des titres immobiliers, et un avocat.","Construisez par phases, financées par l'épargne, et confiez la gestion à une agence plutôt qu'à un proche.","Plus intéressant une fois le fonds de sécurité en place."],part:0.30}];
   $("inv-list").innerHTML=INV.map(i=>'<div class="inv"><div class="h"><div><span class="tag">'+i.lieu+'</span> <h3 style="display:inline">'+esc(i.nom)+'</h3></div><span class="chip '+i.risque+'">'+i.rl+'</span></div><p class="small"><b>'+esc(i.rend)+'</b></p><ul>'+i.pts.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>').join("");
-  $("inv-alloc").innerHTML='<p class="small muted" style="margin-bottom:10px">Une fois le fonds de sécurité constitué, sur '+usd(cap)+' par mois :</p>'+INV.filter(i=>i.part).map(i=>'<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><span>'+esc(i.nom)+'</span><span class="num">'+usd(cap*i.part)+'</span></div>').join("")+
-    '<p class="small muted" style="margin-top:10px">Soit environ '+xof(cap*0.8*S.taux)+' par mois placés à Abidjan.</p>';
+  $("inv-alloc").innerHTML='<p class="small muted" style="margin-bottom:10px">Une fois le fonds de sécurité constitué, sur '+usd(cap)+' par mois :</p>'+INV.filter(i=>i.part).map(i=>'<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><span>'+esc(i.nom)+'</span><span class="num">'+usd(cap*i.part)+'</span></div>').join("");
   const fonds=Math.round(c.essentiel*1.5/500)*500;
   $("inv-ordre").innerHTML='<ol class="steps"><li><b>Ce mois-ci :</b> appliquez les plafonds et triez les abonnements ('+usd(o.gain)+' par mois de gagnés).</li><li><b>Fonds de sécurité :</b> '+usd(fonds)+' sur un dépôt à terme en USD à Kinshasa, en '+(cap>0?Math.ceil(Math.max(0,fonds-(+S.epargneDispo||0))/cap):"—")+' mois environ.</li><li><b>Crédit bancaire :</b> si son taux dépasse 10 %, remboursez-le par anticipation avant d\'investir à 6 ou 7 %.</li><li><b>Ensuite :</b> la répartition ci-dessous, avec votre projet principal en tête.</li><li><b>En parallèle :</b> développez un revenu annexe, sans attendre.</li></ol>';
 }
@@ -732,7 +722,7 @@ function renderConseils(c){
 // ---------- rendu ----------
 function renderAll(){
   const c=calc();
-  $("h-taux").textContent=nf0.format(S.taux);
+  $("h-taux").textContent=nf0.format(+S.tauxCDF||2800);
   {const P=periode();$("h-mois").textContent=P.jours+" j";}
   renderBord(c);renderProjets(c);renderConseils(c);renderJournal(c);renderSettings();renderSecurity();
   $("a-ai").disabled=!sample;$("q-btn").disabled=!sample;$("a-ai").hidden=!sample;$("q-panel").hidden=!sample;
@@ -760,15 +750,14 @@ function renderBord(c){
     const f=lieu==="abj"?(v=>xof(v*S.taux)):usd;
     return '<div class="acct"><h3>'+LIEUX[lieu]+'</h3><div class="row"><span class="muted">Entrées</span><span class="num">'+f(rev)+'</span></div>'+lines+dime+
       '<div class="row tot"><span>Solde</span><span class="num" style="color:var('+(solde<0?'--crit':'--ok')+')">'+f(solde)+'</span></div>'+(lieu==="abj"?'<p class="small muted">≈ '+usd(solde)+'</p>':'')+'</div>';};
-  $("accounts").innerHTML=acct("kin",c.revKin,c.chgKin,c.soldeKin)+acct("abj",c.revAbj,c.chgAbj,c.soldeAbj);
+  $("accounts").innerHTML=acct("kin",c.revKin,c.chgKin,c.soldeKin);
   // ratios
   const R=[
     ["Taux d'endettement",c.endettement,"< 33 %",c.endettement>0.33?"crit":c.endettement>0.2?"warn":"ok"],
     ["Logement / revenus",c.logement,"< 30 %",c.logement>0.3?"crit":c.logement>0.25?"warn":"ok"],
     ["Soutien familial / revenus",c.rev?c.byCat.famille/c.rev:0,"< 15 %",c.rev&&c.byCat.famille/c.rev>0.2?"warn":"ok"],
     ["Église et dîme / revenus",c.rev?c.byCat.eglise/c.rev:0,"Choix personnel","info"],
-    ["Taux d'épargne réel",c.tauxEpargne,"> 20 %",c.tauxEpargne<0.1?"crit":c.tauxEpargne<0.2?"warn":"ok"],
-    ["Couverture des charges d'Abidjan",c.chgAbj?c.revAbj/c.chgAbj:0,"> 100 %",c.revAbj<c.chgAbj?"crit":"ok"]];
+    ["Taux d'épargne réel",c.tauxEpargne,"> 20 %",c.tauxEpargne<0.1?"crit":c.tauxEpargne<0.2?"warn":"ok"]];
   const lab={ok:"Sain",warn:"À surveiller",crit:"Critique",info:"Info"};
   $("ratios").innerHTML='<tr><th>Indicateur</th><th class="r">Valeur</th><th class="r">Repère</th><th class="r">État</th></tr>'+R.map(r=>'<tr><td>'+r[0]+'</td><td class="r num">'+pct(r[1])+'</td><td class="r muted">'+r[2]+'</td><td class="r"><span class="chip '+r[3]+'">'+lab[r[3]]+'</span></td></tr>').join("");
   const A=alertes(c);
@@ -783,7 +772,7 @@ function renderProjets(c){
   const ok=c.reste>=c.objectif;
   $("obj-sum").innerHTML='<div class="alert '+(ok?(c.marge<c.rev*0.03?"warn":"ok"):"crit")+'"><b>'+(ok?"Objectif tenable":"Objectif au-dessus de vos moyens")+'</b><p>Excédent mensuel '+usd(c.reste)+' · objectif '+usd(c.objectif)+' · marge libre restante '+usd(c.marge)+'. Sur 12 mois, cela fait '+both(c.capacite*12)+' investis.</p></div>';
   const P=planProjets(c);
-  if(!P.length){$("proj-list").innerHTML='<p class="empty">Aucun projet. Ajoutez votre premier projet à Abidjan ci-dessous.</p>';$("proj-cal").innerHTML='<p class="empty">Le calendrier apparaîtra avec votre premier projet.</p>';return;}
+  if(!P.length){$("proj-list").innerHTML='<p class="empty">Aucun projet. Ajoutez votre premier projet ci-dessous.</p>';$("proj-cal").innerHTML='<p class="empty">Le calendrier apparaîtra avec votre premier projet.</p>';return;}
   $("proj-list").innerHTML=P.map((p,i)=>{
     const st=p.ecart===null?"crit":p.ecart<=0?"ok":p.ecart<=6?"warn":"crit";
     const stl=p.fin===null?"Non finançable avec l'objectif actuel":p.ecart<=0?"Dans les temps":"En retard de "+p.ecart+" mois";
@@ -830,9 +819,9 @@ function renderJournal(c){
 function renderSettings(){
   [["s-taux","taux"],["s-tauxcdf","tauxCDF"],["s-paie","jourPaie"],["s-dime","dimePct"],["s-dimebase","dimeBase"],["s-dimelieu","dimeLieu"]].forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=S[k];});
   const sel=(opts,v,attr)=>'<select '+attr+'>'+Object.entries(opts).map(([k,l])=>'<option value="'+k+'"'+(k===v?" selected":"")+'>'+esc(l)+'</option>').join("")+'</select>';
-  const rowRev=r=>'<tr data-id="'+esc(r.id)+'"><td><input data-k="label" value="'+esc(r.label)+'" aria-label="Libellé"></td><td><input data-k="montant" type="number" step="any" value="'+esc(r.montant)+'" aria-label="Montant" style="min-width:110px"></td><td>'+sel({USD:"USD",XOF:"F CFA"},r.devise,'data-k="devise" aria-label="Devise"')+'</td><td>'+sel(LIEUX,r.lieu,'data-k="lieu" aria-label="Lieu"')+'</td>';
-  $("t-rev").innerHTML='<tr><th>Libellé</th><th>Montant</th><th>Devise</th><th>Versé à</th><th></th></tr>'+S.revenus.map(r=>rowRev(r)+'<td><button class="ghost" data-del="rev">Supprimer</button></td></tr>').join("");
-  $("t-chg").innerHTML='<tr><th>Libellé</th><th>Montant</th><th>Devise</th><th>Payé depuis</th><th>Catégorie</th><th></th></tr>'+S.charges.map(r=>rowRev(r)+'<td>'+sel(CATS,r.cat,'data-k="cat" aria-label="Catégorie"')+'</td><td><button class="ghost" data-del="chg">Supprimer</button></td></tr>').join("");
+  const rowRev=r=>'<tr data-id="'+esc(r.id)+'"><td><input data-k="label" value="'+esc(r.label)+'" aria-label="Libellé"></td><td><input data-k="montant" type="number" step="any" value="'+esc(r.montant)+'" aria-label="Montant" style="min-width:110px"></td><td>'+sel({USD:"USD",CDF:"FC"},r.devise,'data-k="devise" aria-label="Devise"')+'</td>';
+  $("t-rev").innerHTML='<tr><th>Libellé</th><th>Montant</th><th>Devise</th><th></th></tr>'+S.revenus.map(r=>rowRev(r)+'<td><button class="ghost" data-del="rev">Supprimer</button></td></tr>').join("");
+  $("t-chg").innerHTML='<tr><th>Libellé</th><th>Montant</th><th>Devise</th><th>Catégorie</th><th></th></tr>'+S.charges.map(r=>rowRev(r)+'<td>'+sel(CATS,r.cat,'data-k="cat" aria-label="Catégorie"')+'</td><td><button class="ghost" data-del="chg">Supprimer</button></td></tr>').join("");
   if(!$("j-cat").options.length)fillJCat();
 }
 
@@ -978,7 +967,7 @@ function parseTicket(text){
       let ns=allNums(l);if(!ns.length&&lines[i+1])ns=allNums(lines[i+1]);ns=ns.filter(n=>n>0&&n<1e9);if(ns.length){montant=ns[ns.length-1];break;}}
     if(montant!==null)break;}
   if(montant===null){const ns=lines.filter(l=>!/(t[eé]l|phone|rccm|nif|id\.?nat|n[°o]\s*imp)/i.test(l)).flatMap(allNums).filter(n=>n>0&&n<1e8);if(ns.length)montant=Math.max(...ns);}
-  let devise=null;if(/\b(fc|cdf)\b|francs?\s+congolais/i.test(text))devise="CDF";else if(/f\.?\s?cfa|fcfa|xof/i.test(text))devise="XOF";else if(/\$|usd|dollar/i.test(text))devise="USD";
+  let devise=null;if(/\b(fc|cdf)\b|francs?\s+congolais/i.test(text))devise="CDF";else if(/\$|usd|dollar/i.test(text))devise="USD";
   let date=null;const dm=text.match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);if(dm){let y=+dm[3];if(y<100)y+=2000;const mo=+dm[2],d=+dm[1];if(mo>=1&&mo<=12&&d>=1&&d<=31&&y>2015&&y<2100)date=y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0");}
   const commerce=(lines.find(l=>/[a-zà-ü]{3}/i.test(l)&&!/^\d/.test(l))||"").slice(0,40);
   return{montant,devise,date,commerce,poste:guessPoste(text)};
@@ -1000,8 +989,8 @@ async function readLocal(img,status){
 }
 function ticketPrompt(){
   const postes=[...Object.entries(SBCATS),...(S.postesPerso||[]).map(pp=>["pp_"+pp.id,pp.label])].map(([k,l])=>'"'+k+'" ('+l+')').join(", ");
-  return "Voici la photo d'un ticket de caisse ou d'une facture, à Kinshasa (montants en USD ou en francs congolais FC/CDF) ou à Abidjan (F CFA, code XOF). "+
-  "Réponds uniquement par un objet JSON, sans texte autour : {\"montant\": nombre (le total final réellement payé, pas un sous-total ni la TVA), \"devise\": \"USD\" ou \"CDF\" ou \"XOF\", \"commerce\": nom du commerce, \"date\": \"AAAA-MM-JJ\" ou null, \"poste\": une de ces clés : "+postes+", \"confiance\": \"haute\" ou \"moyenne\" ou \"basse\"}. Si l'image n'est pas un ticket lisible, mets montant à null.";
+  return "Voici la photo d'un ticket de caisse ou d'une facture, à Kinshasa (montants en USD ou en francs congolais FC/CDF). "+
+  "Réponds uniquement par un objet JSON, sans texte autour : {\"montant\": nombre (le total final réellement payé, pas un sous-total ni la TVA), \"devise\": \"USD\" ou \"CDF\", \"commerce\": nom du commerce, \"date\": \"AAAA-MM-JJ\" ou null, \"poste\": une de ces clés : "+postes+", \"confiance\": \"haute\" ou \"moyenne\" ou \"basse\"}. Si l'image n'est pas un ticket lisible, mets montant à null.";
 }
 function parseJsonLoose(t){const m=String(t||"").match(/\{[\s\S]*\}/);if(!m)throw new Error("json");return JSON.parse(m[0]);}
 async function readWithSample(img){
@@ -1042,7 +1031,7 @@ async function onScan(file){
   }
   if(r){
     if(r.montant!=null&&isFinite(+r.montant))$("sc-montant").value=+r.montant;
-    if(["USD","CDF","XOF"].includes(r.devise))$("sc-devise").value=r.devise;
+    if(["USD","CDF"].includes(r.devise))$("sc-devise").value=r.devise;
     const keys=[...Object.keys(SBCATS),...(S.postesPerso||[]).map(pp=>"pp_"+pp.id)];fillScanPostes(keys.includes(r.poste)?r.poste:"divers");
     if(r.date&&/^\d{4}-\d{2}-\d{2}$/.test(r.date))$("sc-date").value=r.date;
     $("sc-label").value=(r.commerce||"Ticket").toString().slice(0,60);
@@ -1189,9 +1178,9 @@ function bindAvis(){
   $("f-q").addEventListener("submit",e=>{e.preventDefault();const t=$("q-text").value.trim();if(t)ask(t,$("q-out"),$("q-btn"));});
 }
 function contexte(){const c=calc();const P=planProjets(c);
-  return "Tu es le conseiller financier personnel d'une personne qui gère son budget entre Kinshasa et Abidjan. Réponds en français, de façon directe, chiffrée et bienveillante, en texte simple sans Markdown, en 250 mots maximum. Taux utilisé : 1 USD = "+S.taux+" F CFA.\n\nSITUATION MENSUELLE\nRevenus : "+usd(c.rev)+" (Kinshasa "+usd(c.revKin)+", Abidjan "+usd(c.revAbj)+" versés en F CFA).\n"+
+  return "Tu es le conseiller financier personnel d'une personne qui vit à Kinshasa. Réponds en français, de façon directe, chiffrée et bienveillante, en texte simple sans Markdown, en 250 mots maximum. Taux utilisé : 1 USD = "+(+S.tauxCDF||2800)+" FC.\n\nSITUATION MENSUELLE\nRevenus : "+usd(c.rev)+".\n"+
   S.revenus.map(r=>"- "+r.label+" : "+r.montant+" "+r.devise+" ("+LIEUX[r.lieu]+")").join("\n")+"\nCharges : "+usd(c.chg)+"\n"+S.charges.map(x=>"- "+x.label+" : "+x.montant+" "+x.devise+" ("+LIEUX[x.lieu]+", "+CATS[x.cat]+")").join("\n")+"\n- Dîme "+S.dimePct+" % : "+usd(c.dime)+
-  "\nExcédent mensuel : "+usd(c.reste)+". Solde Kinshasa "+usd(c.soldeKin)+", solde Abidjan "+xof(c.soldeAbj*S.taux)+". Endettement "+pct(c.endettement)+". Taux d'épargne réel "+pct(c.tauxEpargne)+".\nObjectif d'épargne mensuel : "+usd(c.objectif)+". Épargne disponible : "+usd(+S.epargneDispo||0)+".\nProjets : "+(P.map(p=>p.label+" ("+usd(p.coutU)+", échéance "+p.echeance+", financé "+(p.fin?moisNom(p.fin):"jamais au rythme actuel")+")").join(" ; ")||"aucun")+"\nImprévus notés ce mois : "+usd(journalMois(c).hors)+". Recettes ponctuelles ce mois : "+usd(journalMois(c).rec)+".";}
+  "\nExcédent mensuel : "+usd(c.reste)+". Endettement "+pct(c.endettement)+". Taux d'épargne réel "+pct(c.tauxEpargne)+".\nObjectif d'épargne mensuel : "+usd(c.objectif)+". Épargne disponible : "+usd(+S.epargneDispo||0)+".\nProjets : "+(P.map(p=>p.label+" ("+usd(p.coutU)+", échéance "+p.echeance+", financé "+(p.fin?moisNom(p.fin):"jamais au rythme actuel")+")").join(" ; ")||"aucun")+"\nImprévus notés ce mois : "+usd(journalMois(c).hors)+". Recettes ponctuelles ce mois : "+usd(journalMois(c).rec)+".";}
 async function ask(q,out,btn){
   out.hidden=false;out.textContent="Réflexion en cours…";btn.disabled=true;
   try{await sample(contexte()+"\n\nQUESTION\n"+q,{onText:({text})=>{out.textContent=text;}});}
