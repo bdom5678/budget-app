@@ -627,6 +627,18 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
   <section data-view="parametres" hidden>
     <div class="stack">
       <div class="panel" id="wz-panel"><header><h2>Assistant de démarrage</h2></header><p class="small muted" style="margin-bottom:10px">Repassez par les 4 étapes : jour de paie, revenus, charges fixes, budget de la semaine. Vos dépenses notées sont conservées.</p><button type="button" id="wz-relance">Relancer l'assistant</button></div>
+      <div class="panel" id="rz-panel"><header><h2>Remettre à zéro</h2></header>
+        <p class="small muted" style="margin-bottom:10px">Efface les revenus, charges, dépenses, recettes, projets, épargne et budgets pour repartir de zéro. Votre monnaie, votre jour de paie, votre mot de passe et les noms des portefeuilles sont conservés.</p>
+        <div id="rz-1"><div class="stack" style="gap:8px;margin-bottom:12px" id="rz-cible"></div><button type="button" id="rz-go" style="border-color:var(--crit);color:var(--crit)">Remettre à zéro…</button></div>
+        <div id="rz-2" hidden class="note" style="display:flex;flex-direction:column;gap:10px">
+          <b id="rz-q"></b>
+          <span class="small">Cette action ne peut pas être annulée. Gardez d'abord une copie de vos chiffres :</span>
+          <div class="actions"><button type="button" id="rz-save">Sauvegarder d'abord</button></div>
+          <div class="fld"><label for="rz-txt">Pour confirmer, tapez ZERO</label><input id="rz-txt" autocomplete="off" autocapitalize="characters" placeholder="ZERO"></div>
+          <div class="actions"><button type="button" id="rz-ok" style="background:var(--crit);border-color:var(--crit);color:#fff">Oui, tout remettre à zéro</button><button type="button" id="rz-no">Annuler</button></div>
+        </div>
+        <p class="small" id="rz-msg" aria-live="polite" style="margin-top:8px"></p>
+      </div>
       <div class="panel" id="stat-panel">
         <header><h2>Utilisation des versions</h2><button type="button" id="stat-btn">Actualiser</button></header>
         <p class="small muted" style="margin-bottom:10px">Nombre de téléphones qui ont installé ou ouvert chaque version, et nombre total d'ouvertures. Ce compteur est anonyme : il ne reçoit aucun chiffre ni nom.</p>
@@ -1585,7 +1597,7 @@ async function pfFlush(){clearTimeout(saveT);if(!ready||locked()||!backend)retur
 async function pfLoad(id){if(id===PF.cur)return{S,J};const b=makeBackend(id);let d=null;try{const raw=await b.getEtat();if(raw)d=migrate(await unseal(raw,KEY));}catch(e){}
   if(!d)return null;const jj=[];for(const x of await b.listJ()){try{const e=await unseal(x.raw,KEY);if(e)jj.push(Object.assign({},e,{id:x.id}));}catch(e){}}return{S:d,J:jj};}
 async function pfWipe(id){const b=makeBackend(id);for(const x of await b.listJ())await b.delJ(x.id);await b.delEtat();}
-function pfBlank(){const d=defaults();const keep=["v","taux","tauxCDF","jourPaie","dimeBase","dimeLieu","monnaie","legacyFx","cleApi"];keep.forEach(k=>{if(S&&S[k]!==undefined)d[k]=plain({x:S[k]}).x;});
+function pfBlank(src){src=src===undefined?S:src;const d=defaults();const keep=["v","taux","tauxCDF","jourPaie","dimeBase","dimeLieu","monnaie","legacyFx","cleApi"];keep.forEach(k=>{if(src&&src[k]!==undefined)d[k]=plain({x:src[k]}).x;});
   d.revenus=[];d.charges=[];d.projets=[];d.postesPerso=[];d.epargneDispo=0;d.dimePct=0;d.sousBudget=Object.fromEntries(Object.keys(d.sousBudget).map(k=>[k,0]));d.onboarded=false;delete d.bilanVu;return d;}
 async function pfSwitch(id,fresh){if(id===PF.cur&&!fresh)return;if(locked())return;
   await pfFlush();if(jUnsub){jUnsub();jUnsub=null;}
@@ -1597,6 +1609,7 @@ async function pfSwitch(id,fresh){if(id===PF.cur&&!fresh)return;if(locked())retu
 async function pfCreate(nom){nom=(nom||"").trim().slice(0,40);if(!nom)return false;
   const id="w"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);PF.list.push({id,nom});await pfSwitch(id,true);return true;}
 function pfRenderBar(){
+  rzRender();
   const n=$("h-pf-n");if(n)n.textContent=pfName();
   const bar=$("t-pf");if(!bar)return;if(PF.list.length<2){bar.hidden=true;return;}bar.hidden=false;
   bar.innerHTML=PF.list.map(w=>'<button type="button" data-pfgo="'+esc(w.id)+'" aria-pressed="'+(w.id===PF.cur)+'">'+esc(w.nom)+'</button>').join("")+'<button type="button" data-pfall>Vue d\'ensemble</button>';}
@@ -1648,6 +1661,42 @@ function bindPf(){
   $("pf-new").addEventListener("submit",async e=>{e.preventDefault();const v=$("pf-nom").value.trim();if(!v){$("pf-msg").textContent="Donnez un nom au portefeuille.";return;}
     if(PF.list.length>=12){$("pf-msg").textContent="12 portefeuilles au maximum.";return;}$("pf-nom").value="";await pfCreate(v);});
   $("t-pf").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;if(t.dataset.pfgo)pfSwitch(t.dataset.pfgo);else if(t.dataset.pfall!==undefined)open();});
+}
+// ---------- remise à zéro ----------
+let rzAll=false;
+function rzRender(){const c=$("rz-cible");if(!c)return;const many=PF.list.length>1;
+  c.innerHTML=many?'<label style="display:flex;gap:10px;align-items:center"><input type="radio" name="rz-c" value="un"'+(rzAll?"":" checked")+' style="width:20px;height:20px;accent-color:var(--accent)"> <span>Seulement « '+esc(pfName())+' »</span></label><label style="display:flex;gap:10px;align-items:center"><input type="radio" name="rz-c" value="tous"'+(rzAll?" checked":"")+' style="width:20px;height:20px;accent-color:var(--accent)"> <span>Tous mes portefeuilles ('+PF.list.length+')</span></label>':"";
+  if(!many)rzAll=false;}
+function zeroOf(src){const d=pfBlank(src);if(src&&src.dimePct!==undefined)d.dimePct=src.dimePct;return d;}
+async function rzRun(){
+  const msg=(t,ok)=>{$("rz-msg").textContent=t;$("rz-msg").style.color=ok?"var(--ok)":"var(--crit)";};
+  if(locked()||!ready)return;
+  if(($("rz-txt").value||"").trim().toUpperCase()!=="ZERO")return msg("Tapez ZERO pour confirmer.");
+  $("rz-ok").disabled=true;msg("Remise à zéro en cours…",true);
+  try{
+    if(rzAll)for(const w of PF.list){if(w.id===PF.cur)continue;const b=makeBackend(w.id);let src=null;
+      try{const raw=await b.getEtat();if(raw)src=migrate(await unseal(raw,KEY));}catch(e){}
+      for(const x of await b.listJ())await b.delJ(x.id);if(src)await b.setEtat(await pack(zeroOf(src)));}
+    await pfFlush();const nS=zeroOf(S);
+    for(const x of await backend.listJ())await backend.delJ(x.id);
+    S=nS;J=[];await backend.setEtat(await pack(S));
+    $("rz-txt").value="";$("rz-2").hidden=true;$("rz-1").hidden=false;
+    document.querySelectorAll("#verdict,#ai-out,#q-out").forEach(el=>{el.innerHTML="";});
+    renderAll();msg(rzAll?"Tous les portefeuilles sont remis à zéro.":"« "+pfName()+" » est remis à zéro.",true);
+    location.hash="#aujourdhui";window.scrollTo(0,0);
+    showToast(rzAll?"Tous les chiffres sont remis à zéro.":"Chiffres remis à zéro.");
+    if(typeof wzOpen==="function")setTimeout(wzOpen,400);
+  }catch(e){msg("La remise à zéro a échoué. Réessayez.");}
+  $("rz-ok").disabled=false;}
+function bindZero(){
+  $("rz-cible").addEventListener("change",e=>{if(e.target.name==="rz-c")rzAll=e.target.value==="tous";});
+  $("rz-go").onclick=()=>{if(locked())return;$("rz-q").textContent=rzAll&&PF.list.length>1?"Remettre à zéro les "+PF.list.length+" portefeuilles ?":"Remettre à zéro « "+pfName()+" » ?";
+    $("rz-1").hidden=true;$("rz-2").hidden=false;$("rz-msg").textContent="";$("rz-txt").value="";$("rz-txt").focus();};
+  $("rz-no").onclick=()=>{$("rz-2").hidden=true;$("rz-1").hidden=false;$("rz-msg").textContent="";};
+  $("rz-save").onclick=()=>{const dl=$("x-dl");if(dl&&!dl.hidden)dl.click();else{$("x-copy").click();const x=$("x-txt");if(x)x.scrollIntoView({block:"center"});}
+    $("rz-msg").textContent="Sauvegarde lancée. Gardez le fichier ou le texte copié avant de continuer.";$("rz-msg").style.color="var(--ok)";};
+  $("rz-ok").onclick=rzRun;
+  $("rz-txt").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();rzRun();}});
 }
 // --- assistant de démarrage ---
 const PRESETS=[["Loyer","logement"],["Électricité et eau","logement"],["Aide à la famille","famille"],["Crédit ou remboursement","dette"],["École des enfants","autre"],["Téléphone et internet","abonnements"],["Église, tontine ou épargne","eglise"]];
@@ -1766,7 +1815,7 @@ const TOUR=[
  {t:"projets",sel:"#f-obj",h:"6. Objectif et projets",p:"Votre objectif d'épargne mensuel et vos projets, avec la date à laquelle chacun sera financé."},
  {t:"conseils",sel:"#ct-list",h:"7. Conseils",p:"Les gestes qui rapportent le plus, le plus important en premier. En dessous : plafonds de la semaine, placements et bilan détaillé."},
  {t:"aujourdhui",sel:"#h-pf",h:"8. Plusieurs portefeuilles",p:"Le bouton 👛 en haut ouvre vos portefeuilles : créez-en un pour le ménage, une activité, un projet ou l'argent d'un proche, renommez-les, et passez de l'un à l'autre. Chacun a son budget ; la vue d'ensemble additionne tout."},
- {t:"parametres",sel:"[data-view=parametres] .panel",h:"9. Réglages",p:"La roue dentée en haut ouvre vos réglages : jour de paie, revenus, charges, mot de passe, sauvegarde. Vous pouvez y relancer l'assistant de démarrage."},
+ {t:"parametres",sel:"[data-view=parametres] .panel",h:"9. Réglages",p:"La roue dentée en haut ouvre vos réglages : jour de paie, revenus, charges, mot de passe, sauvegarde. Vous pouvez y relancer l'assistant de démarrage ou tout remettre à zéro."},
  {t:"aujourdhui",sel:null,h:"C'est parti !",p:"Le jour de la paie, un bilan de la période s'affichera et vous proposera de mettre le reste de côté. Bonne gestion !"}];
 let tourI=-1;
 function tourSeen(){try{return localStorage.getItem("bka-demo2")==="1";}catch(e){return true;}}
@@ -1793,7 +1842,7 @@ function bindTour(){
 }
 bindSettings();bindConseils();bindProjets();bindJournal();bindAvis();route();renderAll();
 $("f-avis").requestSubmit();
-bindLock();bindBackup();bindBio();bindScan();bindPf();bindParcours();bindTour();start();
+bindLock();bindBackup();bindBio();bindScan();bindPf();bindZero();bindParcours();bindTour();start();
 })();
 </script>
 
