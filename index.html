@@ -24,18 +24,18 @@
   --bg:#f5f7f6; --surface:#ffffff; --sunk:#eaf0ee; --line:#d5dfdb;
   --ink:#14211e; --muted:#5a6b66; --accent:#0e5c50; --accent-ink:#ffffff; --ochre:#b7791f;
   --ok:#1f7a4d; --ok-bg:#e3f3ea; --warn:#9a6200; --warn-bg:#fbf0d9; --crit:#b3261e; --crit-bg:#fbe4e2; --info:#2f5f8a; --info-bg:#e3edf6;
-  --c1:#0e5c50; --c2:#b7791f; --c3:#7a4fa3; --c4:#2f7fb5; --c5:#c2553d; --c6:#5c8f3a; --c7:#8a8f2a; --c8:#7d8a86; --c9:#d8a23a;
+  --c1:#0e5c50; --c2:#b7791f; --c3:#7a4fa3; --c4:#2f7fb5; --c5:#c2553d; --c6:#5c8f3a; --c7:#8a8f2a; --c8:#7d8a86; --c9:#d8a23a; --s1:#257de0; --s2:#f47230; --s3:#00b894; --s4:#f2a600;
   --f-display:"Sora",ui-sans-serif,system-ui,sans-serif; --f-body:"Manrope",ui-sans-serif,system-ui,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   --r:10px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1514; --surface:#162020; --sunk:#1c2928; --line:#2b3a38; --ink:#e4ecea; --muted:#93a6a1; --accent:#4fb3a1; --accent-ink:#06201b; --ochre:#e0a64a;
   --ok:#6fd19c; --ok-bg:#14301f; --warn:#f0bd5c; --warn-bg:#33270e; --crit:#ff8a80; --crit-bg:#3a1714; --info:#8cbbe6; --info-bg:#15283a;
-  --c1:#4fb3a1; --c2:#e0a64a; --c3:#b48ad8; --c4:#6db3e3; --c5:#ec8a73; --c6:#93c46b; --c7:#c9cd5a; --c8:#9aa8a4; --c9:#f3c96b; color-scheme:dark}}
+  --c1:#4fb3a1; --c2:#e0a64a; --c3:#b48ad8; --c4:#6db3e3; --c5:#ec8a73; --c6:#93c46b; --c7:#c9cd5a; --c8:#9aa8a4; --c9:#f3c96b; --s1:#338ced; --s2:#e76624; --s3:#00a888; --s4:#d28e05; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1514; --surface:#162020; --sunk:#1c2928; --line:#2b3a38; --ink:#e4ecea; --muted:#93a6a1; --accent:#4fb3a1; --accent-ink:#06201b; --ochre:#e0a64a;
   --ok:#6fd19c; --ok-bg:#14301f; --warn:#f0bd5c; --warn-bg:#33270e; --crit:#ff8a80; --crit-bg:#3a1714; --info:#8cbbe6; --info-bg:#15283a;
-  --c1:#4fb3a1; --c2:#e0a64a; --c3:#b48ad8; --c4:#6db3e3; --c5:#ec8a73; --c6:#93c46b; --c7:#c9cd5a; --c8:#9aa8a4; --c9:#f3c96b; color-scheme:dark}
+  --c1:#4fb3a1; --c2:#e0a64a; --c3:#b48ad8; --c4:#6db3e3; --c5:#ec8a73; --c6:#93c46b; --c7:#c9cd5a; --c8:#9aa8a4; --c9:#f3c96b; --s1:#338ced; --s2:#e76624; --s3:#00a888; --s4:#d28e05; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
@@ -300,6 +300,38 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
   [data-view="parametres"]>.stack>*{break-inside:avoid;margin-bottom:20px;display:block;width:100%}
 }
 @media (min-width:720px) and (max-height:560px){nav.tabs{grid-auto-rows:60px}nav.tabs a{min-height:60px}}
+
+/* ---------- Sophia : profil, prévisions, historique ---------- */
+.prof .nm{font-size:1.25rem;font-weight:700;line-height:1.25}
+.stk{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;background:var(--sunk);margin:10px 0 8px}
+.stk i{display:block;height:100%;min-width:0}
+.stk i:first-child{border-radius:7px 0 0 7px}.stk i:last-child{border-radius:0 7px 7px 0}
+.lgd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;font-size:.85rem}
+.lgd span{display:flex;align-items:center;gap:6px;min-width:0}
+.lgd i{flex:none;width:10px;height:10px;border-radius:3px}
+.lgd b{margin-left:auto;font-family:var(--f-num);font-weight:600}
+.sw{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.sw div{font-size:.88rem;line-height:1.4}
+.prev .big{font-family:var(--f-num);font-size:1.5rem;font-weight:600;line-height:1.2}
+.ins{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.ins div{border-left:3px solid var(--line);padding:2px 0 2px 10px;font-size:.88rem;line-height:1.4}
+.ins div.warn{border-color:var(--warn)}.ins div.ok{border-color:var(--ok)}.ins div.info{border-color:var(--accent)}
+.mch{width:100%;height:auto;display:block;overflow:visible}
+.mch text{font-size:11px;fill:var(--muted);font-family:var(--f-body)}
+.mch .bar{cursor:pointer}
+.mch .bar:hover rect.m{opacity:.85}
+.mch .sel rect.m{stroke:var(--ink);stroke-width:2}
+.mmnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 8px}
+.mmnav button{min-width:44px;min-height:44px;border-radius:22px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:1.1rem;cursor:pointer}
+.mmnav button:disabled{opacity:.35;cursor:default}
+.hb{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+.hb .l{display:flex;justify-content:space-between;gap:8px;font-size:.88rem}
+.hb .t{height:8px;border-radius:4px;background:var(--sunk);position:relative}
+.hb .t i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--s1)}
+.hb .t u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
+.ctop details{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface)}
+.ctop details summary{cursor:pointer;font-weight:600;min-height:28px}
+.ctop details .more{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 </style>
 
 <div id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-t">
@@ -410,6 +442,8 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
         <button type="button" id="t-photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Photo du ticket</button>
       </div>
       <div class="panel" id="t-todo-p"><header><h2>À faire</h2></header><div class="todo" id="t-todo"></div></div>
+      <div class="panel prev" id="t-prev"></div>
+      <div class="panel prof" id="t-prof"></div>
       <div class="panel"><header><h2>Mes postes</h2><a href="#journal" class="small">Tout voir</a></header><div class="postes" id="t-postes"></div></div>
       <a class="ctop lk" href="#projets" style="display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-decoration:none;color:var(--ink)"><span><b>Je veux acheter quelque chose</b><br><span class="small muted">Est-ce raisonnable maintenant ?</span></span><span aria-hidden="true">›</span></a>
     </div>
@@ -592,6 +626,11 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
           </div>
           <div id="pl-var" class="fixes"></div>
         </div>
+        <div class="panel" id="mm-panel">
+          <header><h2>Mes mois</h2><span class="muted small">une période de paie après l'autre</span></header>
+          <div id="mm-chart"></div>
+          <div id="mm-det"></div>
+        </div>
         <div class="panel">
           <header><h2>Créer un nouveau poste de dépense</h2><span class="muted small">Il apparaîtra dans le tableau ci-dessus</span></header>
           <form class="f" id="f-np">
@@ -733,7 +772,7 @@ const LIEUX={kin:"Kinshasa",abj:"Abidjan"};
 let uid=0; const nid=()=>Date.now().toString(36)+(uid++).toString(36);
 
 function defaults(){return{
-  v:2,taux:580,dimePct:10,dimeBase:"total",dimeLieu:"kin",
+  v:2,taux:580,dimePct:0,dimeBase:"total",dimeLieu:"kin",
   revenus:[
     {id:"r1",label:"Salaire",montant:0,devise:"USD",lieu:"kin"},
     {id:"r2",label:"Revenu versé à Abidjan",montant:0,devise:"USD",lieu:"abj"}],
@@ -973,10 +1012,10 @@ function renderConseils(c){
 
 // ---------- rendu ----------
 function renderAll(){
-  const c=calc();
+  const c=calc();try{SOPH=sophia(c);}catch(e){SOPH=null;}
   $("h-taux").textContent=nf0.format(S.taux);
   {const P=periode();$("h-mois").textContent=P.jours+" j";}
-  renderBord(c);renderProjets(c);renderConseils(c);renderJournal(c);renderSettings();renderSecurity();renderToday(c);renderCtop(c);if(sdCat!==undefined&&$("sh-dep")&&!$("sh-dep").hidden)sdRender();
+  renderBord(c);renderProjets(c);renderConseils(c);renderJournal(c);renderSettings();renderSecurity();renderToday(c);renderCtop(c);renderProfil();renderPrev();renderMois();if(sdCat!==undefined&&$("sh-dep")&&!$("sh-dep").hidden)sdRender();
   $("a-ai").disabled=!sample;$("q-btn").disabled=!sample;$("a-ai").hidden=!sample;$("q-panel").hidden=!sample;
 }
 
@@ -1527,14 +1566,28 @@ function renderToday(c){
   $("t-postes").innerHTML=V.length?V.map(v=>{const r=v.budget?Math.min(1,v.spent/v.budget):1;const w=v.rythme||v.reste<0;return '<div><div class="ln"><span>'+esc(v.label)+'</span><span class="muted">'+(v.reste<0?'<b style="color:var(--crit)">dépassé de '+esc(usd(-v.reste))+'</b>':'reste <b style="color:var(--ink)">'+esc(usd(v.reste))+'</b>')+'</span></div><div class="pbar"><i class="'+(w?"w":"")+'" style="width:'+(r*100)+'%"></i></div></div>';}).join(""):'<p class="small muted">Fixez votre budget de la semaine dans Conseils, ou lancez l\'assistant depuis les réglages.</p>';
 }
 function renderCtop(c){
-  if(!$("ct-list"))return;const o=optim(c);const C=[];
-  if(o.gainCourant>0)C.push({g:o.gainCourant,t:"Tenir les plafonds de la semaine",p:"Votre vie courante est prévue à "+usd(c.byCat.courant)+" par mois. Avec les plafonds proposés, vous gardez "+usd(o.gainCourant)+" de plus chaque mois.",b:"Voir les plafonds",go:"t-sb"});
-  if(o.gainAbo>0)C.push({g:o.gainAbo,t:"Trier les abonnements",p:"Un seul bouquet TV, un seul assistant payant, l'internet renégocié.",b:"Voir les conseils",go:"opt-tips"});
+  if(!$("ct-list"))return;const o=optim(c);const C=[];const X=SOPH;const jm=journalMois(c);const P=periode();const jours=Math.max(1,P.jours);
+  const rev=c.rev;
+  if(rev>0&&c.reste<0)C.push({w:1e9,t:"Revenir à l'équilibre",p:"Vos charges dépassent vos revenus de "+usd(-c.reste)+" par mois. Avant tout : supprimez ou réduisez une charge de ce montant.",b:"Mes charges",href:"#parametres"});
+  if(rev>0&&c.endettement>0.33)C.push({w:9e8,t:"Stopper l'endettement",p:"Les remboursements font "+pct(c.endettement)+" de vos revenus (seuil : 33 %). Aucun nouveau crédit ; remboursez d'abord le prêt au taux le plus élevé.",b:"Mes charges",href:"#parametres"});
+  if(X)X.cats.filter(x=>x.budget>0&&x.proj>x.budget*1.05).forEach(x=>{const g=x.proj-x.budget;C.push({g,t:"Ralentir sur « "+x.label+" »",p:"Déjà "+usd(x.spent)+" dépensés. À votre rythme habituel, ce poste finira à "+usd(x.proj)+" pour "+usd(x.budget)+" prévus. En restant sous "+usd(Math.max(0,x.budget-x.spent)/jours)+" par jour jusqu'au "+jourCourt(P.next)+", vous tenez le budget.",b:"Voir mes postes",href:"#journal"});});
+  if(X&&X.n>=2)X.cats.filter(x=>x.budget>0&&x.over>=2&&x.hist>x.budget).forEach(x=>C.push({g:x.hist*0.1,t:"Un budget réaliste pour « "+x.label+" »",p:"Ces "+X.n+" derniers mois, vous y avez dépensé en moyenne "+usd(x.hist)+" pour "+usd(x.budget)+" prévus. Visez "+usd(x.hist*0.9)+" (10 % de moins que d'habitude) : c'est tenable et vous gagnez "+usd(x.hist*0.1)+" par mois.",b:"Mes plafonds",go:"t-sb"}));
+  if(X&&X.prof&&rev>0){const pr=X.prof;
+    if(pr.sh.pla>0.3)C.push({g:pr.g.pla-0.3*pr.base,t:"Ramener les plaisirs à 30 %",p:"Sorties, abonnements et divers prennent "+pct(pr.sh.pla)+" de vos revenus. Les ramener à 30 % libère "+usd(pr.g.pla-0.3*pr.base)+" par mois, sans tout supprimer.",b:"Mes plafonds",go:"t-sb"});
+    if(pr.sh.epa<0.1){const t=rev*0.1;C.push({g:Math.max(0,t-pr.g.epa),t:"Vous payer en premier",p:"Votre épargne réelle est d'environ "+pct(pr.sh.epa)+". Le jour de paie (le "+(S.jourPaie||25)+"), mettez "+usd(t)+" de côté avant toute dépense : ce qui n'est pas visible ne se dépense pas.",b:"Mes projets",href:"#projets"});}}
+  const seuil=Math.max(1,rev*0.005);
+  if(o.gainCourant>seuil)C.push({g:o.gainCourant,t:"Tenir les plafonds de la semaine",p:"Votre vie courante est prévue à "+usd(c.byCat.courant)+" par mois. Avec les plafonds proposés ("+usd(o.cibleSemaine)+" par semaine), vous gardez "+usd(o.gainCourant)+" de plus chaque mois.",b:"Voir les plafonds",go:"t-sb"});
+  if(o.gainAbo>seuil)C.push({g:o.gainAbo,t:"Trier les abonnements",p:"Ils coûtent "+usd(c.byCat.abonnements*12)+" par an. Un seul bouquet TV, un seul service payant de chaque type, et l'internet renégocié : "+usd(o.gainAbo)+" par mois de gagnés.",b:"Voir les conseils",go:"opt-tips"});
+  if(jm.rec>0)C.push({g:jm.rec/2,t:"Placer la moitié des recettes",p:"Vous avez reçu "+usd(jm.rec)+" en plus ce mois. Mettez "+usd(jm.rec/2)+" sur vos projets aujourd'hui, avant qu'ils ne se diluent dans le quotidien.",b:"Mes projets",href:"#projets"});
+  if(X)X.cats.filter(x=>!x.budget&&x.reg>=2&&x.hist>0).forEach(x=>C.push({g:-0.5,t:"Prévoir « "+x.label+" »",p:"Cette dépense revient presque chaque mois (environ "+usd(x.hist)+"). Créez-lui un poste avec ce montant : elle ne viendra plus casser le budget.",b:"Créer le poste",href:"#journal"}));
   const fonds=c.essentiel*1.5,dispo=+S.epargneDispo||0;
-  if(dispo<fonds)C.push({g:-1,t:"Constituer le fonds de sécurité",p:"Visez "+usd(fonds)+" (6 semaines de charges) avant tout placement. Vous avez "+usd(dispo)+".",b:"Mes projets",href:"#projets"});
+  if(rev>0&&dispo<fonds){const cap=Math.max(c.capacite,c.reste*0.5,0);C.push({g:-1,t:"Constituer le fonds de sécurité",p:"Visez "+usd(fonds)+" (6 semaines de charges) avant tout placement. Vous avez "+usd(dispo)+"."+(cap>0?" En y mettant "+usd(cap)+" par mois, c'est fait en "+Math.ceil((fonds-dispo)/cap)+" mois.":""),b:"Mes projets",href:"#projets"});}
+  if(X&&X.jour)C.push({g:-1.5,t:"Préparer "+X.jour.j,p:"C'est le jour où vous dépensez le plus ("+pct(X.jour.part)+" de vos dépenses courantes). Fixez la veille une liste et un montant maximum.",b:"Mes dépenses",href:"#journal"});
   C.push({g:-2,t:"Faire travailler l'excédent",p:"Pistes de placement et répartition proposée pour votre épargne mensuelle.",b:"Voir les pistes",go:"inv-list"});
-  C.sort((a,b)=>b.g-a.g);
-  $("ct-list").innerHTML=C.slice(0,3).map((x,i)=>'<div class="card'+(i===0?" first":"")+'"><div class="h"><span>'+(i===0?"1 · LE PLUS IMPORTANT":String(i+1))+'</span>'+(x.g>0?'<b>+ '+esc(usd(x.g))+' / mois</b>':'')+'</div><h3>'+esc(x.t)+'</h3><p class="small muted">'+esc(x.p)+'</p>'+(x.href?'<a class="btn'+(i===0?' pri':'')+'" href="'+x.href+'" style="align-self:flex-start">'+esc(x.b)+'</a>':'<button type="button" class="'+(i===0?'pri':'')+'" data-go="'+x.go+'" style="align-self:flex-start">'+esc(x.b)+'</button>')+'</div>').join("")+
+  C.forEach(x=>{x.k=(x.w||0)+(x.g||0);});C.sort((a,b)=>b.k-a.k);
+  const card=(x,i)=>'<div class="card'+(i===0?" first":"")+'"><div class="h"><span>'+(i===0?"1 · LE PLUS IMPORTANT":String(i+1))+'</span>'+(x.g>0?'<b>+ '+esc(usd(x.g))+' / mois</b>':'')+'</div><h3>'+esc(x.t)+'</h3><p class="small muted">'+esc(x.p)+'</p>'+(x.href?'<a class="btn'+(i===0?' pri':'')+'" href="'+x.href+'" style="align-self:flex-start">'+esc(x.b)+'</a>':'<button type="button" class="'+(i===0?'pri':'')+'" data-go="'+x.go+'" style="align-self:flex-start">'+esc(x.b)+'</button>')+'</div>';
+  const rest=C.slice(3);
+  $("ct-list").innerHTML=C.slice(0,3).map(card).join("")+(rest.length?'<details><summary>'+rest.length+' autre'+(rest.length>1?'s':'')+' conseil'+(rest.length>1?'s':'')+'</summary><div class="more">'+rest.map((x,i)=>card(x,i+3)).join("")+'</div></details>':'')+
     '<button type="button" class="lk" data-go="kpis" style="cursor:pointer;font:inherit;text-align:left"><span><b>Mon bilan détaillé</b><br><span class="small muted">Répartition, comptes, endettement, alertes</span></span><span aria-hidden="true">›</span></button>';
 }
 function showToast(t,undo){const el=$("toast");$("toast-t").textContent=t;$("toast-b").hidden=!undo;el.hidden=false;clearTimeout(showToast.tm);showToast.undo=undo;showToast.tm=setTimeout(()=>{el.hidden=true;showToast.undo=null;},6000);}
@@ -1586,7 +1639,7 @@ function checkBilan(){
     (lines?'<div class="panel" style="display:flex;flex-direction:column;gap:8px"><h3>Par poste</h3>'+lines+'</div>':'')+
     (reste>0?'<button type="button" class="bigok" id="sb-save">Mettre '+esc(usd(reste))+' de côté pour mes projets</button><button type="button" id="sb-keep" style="min-height:48px">Garder et commencer la nouvelle période</button>':'<button type="button" class="bigok" id="sb-keep">Compris, nouvelle période</button>');
   openSheet("sh-bilan");
-  const done=add=>{if(add>0)S.epargneDispo=Math.round(((+S.epargneDispo||0)+add)*100)/100;S.bilanVu=P.startISO;closeSheet("sh-bilan");changed();if(add>0)showToast(usd(add)+" ajoutés à votre épargne.");};
+  const done=add=>{if(add>0)S.epargneDispo=Math.round(((+S.epargneDispo||0)+add)*100)/100;S.histo=S.histo||{};S.histo[Q.startISO]={reste:Math.round(reste*100)/100,mis:Math.round(Math.max(0,add)*100)/100};S.bilanVu=P.startISO;closeSheet("sh-bilan");changed();if(add>0)showToast(usd(add)+" ajoutés à votre épargne.");};
   if($("sb-save"))$("sb-save").onclick=()=>done(reste);$("sb-keep").onclick=()=>done(0);
 }
 // ---------- portefeuilles ----------
@@ -1697,6 +1750,114 @@ function bindZero(){
     $("rz-msg").textContent="Sauvegarde lancée. Gardez le fichier ou le texte copié avant de continuer.";$("rz-msg").style.color="var(--ok)";};
   $("rz-ok").onclick=rzRun;
   $("rz-txt").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();rzRun();}});
+}
+// ---------- Sophia : historique, apprentissage, profil ----------
+let SOPH=null,mmSel=null;
+function perAt(y,m){const j=Math.min(31,Math.max(1,+S.jourPaie||25));const d=new Date(y,m,1);return new Date(d.getFullYear(),d.getMonth(),Math.min(j,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));}
+function perStart(d){let st=perAt(d.getFullYear(),d.getMonth());if(d<st)st=perAt(d.getFullYear(),d.getMonth()-1);return st;}
+const nCat=k=>k==="courant"?"divers":k==="loisirs"?"sorties":k;
+const sLab=k=>k==="abonnements"?"Abonnements":catLabel(k);
+function histo(){const P=periode();const E0=J.filter(e=>e.date);if(!E0.length)return[];
+  const first=E0.reduce((a,e)=>e.date<a?e.date:a,P.startISO);let st=perStart(new Date(first+"T12:00:00"));const out=[];
+  while(isoD(st)<=P.startISO&&out.length<60){const nx=perAt(st.getFullYear(),st.getMonth()+1);const a=isoD(st),b=isoD(nx);
+    const E=J.filter(e=>e.date>=a&&e.date<b);const sp={};let dep=0,fix=0,rec=0;
+    E.forEach(e=>{const u=toUSD(e.montant,e.devise);if(e.type==="recette"){rec+=u;return;}if(e.cat==="fixe"){fix+=u;return;}const k=nCat(e.cat);sp[k]=(sp[k]||0)+u;dep+=u;});
+    out.push({s:a,n:b,start:new Date(st),next:nx,sp,dep,fix,rec,cur:a===P.startISO,count:E.length,E});st=nx;}
+  return out;}
+function sophia(c){
+  const P=periode(),H=histo();const past=H.filter(h=>!h.cur&&h.count>0).slice(-3);const n=past.length;
+  const avg={};past.forEach(h=>Object.entries(h.sp).forEach(([k,v])=>{avg[k]=(avg[k]||0)+v/n;}));
+  const cur=H.find(h=>h.cur)||{sp:{},dep:0,rec:0,fix:0,count:0};
+  const f=P.total?P.ecoules/P.total:0,restF=Math.max(0,1-f);
+  const bud={};Object.keys(SBCATS).forEach(k=>bud[k]=(+S.sousBudget[k]||0)*W2M);(S.postesPerso||[]).forEach(pp=>bud["pp_"+pp.id]=+pp.budget||0);
+  const keys=[...new Set(Object.keys(bud).concat(Object.keys(avg),Object.keys(cur.sp)))];
+  const mode=n?"appris":(f>=0.25&&cur.count>=3)?"rythme":"aucun";
+  const cats=keys.map(k=>{const spent=cur.sp[k]||0,h=avg[k]||0,b=bud[k]||0;
+    let proj=mode==="appris"?spent+h*restF:mode==="rythme"?(f>0?spent/f:spent):Math.max(spent,b);proj=Math.max(proj,spent);
+    const over=past.filter(x=>b>0&&(x.sp[k]||0)>b*1.1).length;const reg=past.filter(x=>(x.sp[k]||0)>0).length;
+    return{k,label:sLab(k),spent,hist:h,budget:b,proj,over,reg};}).filter(x=>x.spent||x.hist||x.budget);
+  const B=cats.reduce((a,x)=>a+x.budget,0),V=cats.reduce((a,x)=>a+x.proj,0);
+  // jours de la semaine (90 derniers jours)
+  const lim=isoD(new Date(Date.now()-90*864e5));const wd=[0,0,0,0,0,0,0];let wn=0;
+  J.filter(e=>e.type!=="recette"&&e.cat!=="fixe"&&(e.date||"")>=lim).forEach(e=>{wd[new Date(e.date+"T12:00:00").getDay()]+=toUSD(e.montant,e.devise);wn++;});
+  const wt=wd.reduce((a,v)=>a+v,0);const wi=wd.indexOf(Math.max(...wd));
+  const jour=wn>=8&&wt>0&&wd[wi]/wt>0.25?{j:["le dimanche","le lundi","le mardi","le mercredi","le jeudi","le vendredi","le samedi"][wi],part:wd[wi]/wt}:null;
+  const avgDep=n?past.reduce((a,h)=>a+h.dep,0)/n:0;
+  return{P,H,past,n,avg,cur,f,mode,cats,B,V,jour,avgDep,prof:profil(c,{n,avg,cur,f,mode,cats})};
+}
+function profil(c,L){
+  const rev=c.rev;const vm={};
+  if(L.mode==="appris")Object.assign(vm,L.avg);else if(L.mode==="rythme")L.cats.forEach(x=>vm[x.k]=x.proj);
+  const hasVar=Object.values(vm).some(v=>v>0);
+  const g={ess:0,eng:0,pla:0,epa:0};
+  const fx=c.byCat;g.ess+=(fx.logement||0)+(fx.autre||0)+(hasVar?0:(fx.courant||0));g.eng+=(fx.dette||0)+(fx.famille||0)+(fx.eglise||0);g.pla+=(fx.abonnements||0);g.epa+=(fx.epargne||0);
+  Object.entries(vm).forEach(([k,v])=>{if(["alimentation","transport","maison","sante"].includes(k)||k.startsWith("pp_"))g.ess+=v;else if(k==="famille")g.eng+=v;else if(k==="projet")g.epa+=v;else g.pla+=v;});
+  if(!hasVar&&!(fx.courant>0)){Object.keys(SBCATS).forEach(k=>{const v=(+S.sousBudget[k]||0)*W2M;if(["alimentation","transport","maison"].includes(k))g.ess+=v;else g.pla+=v;});}
+  const dep=g.ess+g.eng+g.pla;g.epa+=Math.max(0,rev-dep-g.epa);
+  const base=Math.max(rev,dep+(fx.epargne||0),1);const sh={ess:g.ess/base,eng:g.eng/base,pla:g.pla/base,epa:g.epa/base};
+  const src=L.mode==="appris"?"Calculé sur vos charges et "+L.n+" mois de dépenses":L.mode==="rythme"?"Calculé sur vos charges et le rythme de ce mois":"Calculé sur vos charges et vos budgets : il s'affinera avec vos dépenses";
+  let P;
+  if(rev<=0)P={nm:"Profil en construction",d:"Indiquez vos revenus et notez quelques dépenses : Sophia dressera votre profil.",f:"",w:""};
+  else if(L.mode==="aucun")P={nm:"Profil en construction",d:"Premier aperçu d'après vos charges et vos budgets. Notez vos dépenses : dès quelques jours, Sophia vous donnera votre vrai profil.",f:"",w:""};
+  else if(dep>rev*1.02)P={nm:"Budget sous tension",d:"Vos dépenses dépassent vos revenus de "+usd(dep-rev)+" par mois.",f:"Vous suivez vos chiffres : c'est le premier pas pour redresser.",w:"Réduire d'abord les plaisirs ("+pct(sh.pla)+") avant toute nouvelle dépense."};
+  else if(c.byCat.dette/rev>0.3)P={nm:"En plein désendettement",d:"Les remboursements prennent "+pct(c.byCat.dette/rev)+" de vos revenus.",f:"Chaque échéance payée vous libère un peu plus.",w:"Aucun nouveau crédit tant que vous êtes au-dessus de 33 %."};
+  else if(sh.eng>0.22)P={nm:"Pilier de la famille",d:"Dettes, famille et dons représentent "+pct(sh.eng)+" de vos revenus.",f:"Votre générosité et votre sens des engagements.",w:"Fixer un montant mensuel pour les aides : au-delà, « le mois prochain »."};
+  else if(sh.epa>=0.2&&sh.pla<=0.3)P={nm:"Bâtisseur",d:"Vous mettez de côté environ "+pct(sh.epa)+" de vos revenus.",f:"Une vraie capacité à financer vos projets.",w:"Faire travailler cette épargne une fois le fonds de sécurité constitué."};
+  else if(sh.pla>0.35)P={nm:"Bon vivant",d:"Les plaisirs (sorties, abonnements, divers) prennent "+pct(sh.pla)+" de vos revenus.",f:"Vous profitez de votre argent.",w:"Les ramener à 30 % libérerait "+usd(Math.max(0,g.pla-0.3*base))+" par mois."};
+  else if(sh.ess>0.6)P={nm:"Budget serré sur l'essentiel",d:"Logement, courses et transport prennent "+pct(sh.ess)+" de vos revenus.",f:"Peu de dépenses superflues.",w:"Comparer les prix des courses et du transport, ou chercher un revenu en plus."};
+  else P={nm:"Équilibré",d:"Vos dépenses sont bien réparties entre l'essentiel, vos engagements, vos plaisirs et l'épargne.",f:"Une répartition saine.",w:sh.epa<0.15?"Monter l'épargne à 15 ou 20 % des revenus.":"Garder le cap mois après mois."};
+  return Object.assign(P,{g,sh,src,base,rev});
+}
+const PGRP=[["ess","Essentiel","var(--s1)"],["eng","Engagements","var(--s2)"],["pla","Plaisirs","var(--s3)"],["epa","Épargne","var(--s4)"]];
+function renderProfil(){const el=$("t-prof");if(!el||!SOPH)return;const P=SOPH.prof;
+  if(P.rev<=0){el.innerHTML='<header><h2>Mon profil financier</h2></header><p class="small muted">'+esc(P.d)+'</p>';return;}
+  el.innerHTML='<header><h2>Mon profil financier</h2></header><div class="nm">'+esc(P.nm)+'</div><p class="small muted" style="margin-top:4px">'+esc(P.d)+'</p>'+
+    '<div class="stk" role="img" aria-label="Répartition : '+PGRP.map(x=>x[1]+' '+pct(P.sh[x[0]])).join(', ')+'">'+PGRP.map(x=>P.sh[x[0]]>0.004?'<i style="flex:'+P.sh[x[0]].toFixed(4)+' 1 0;background:'+x[2]+'" title="'+x[1]+' : '+esc(usd(P.g[x[0]]))+' par mois ('+pct(P.sh[x[0]])+')"></i>':'').join("")+'</div>'+
+    '<div class="lgd">'+PGRP.map(x=>'<span><i style="background:'+x[2]+'"></i>'+x[1]+'<b>'+Math.round(P.sh[x[0]]*100)+' %</b></span>').join("")+'</div>'+
+    '<div class="sw">'+(P.f?'<div><b>Point fort :</b> '+esc(P.f)+'</div>':'')+(P.w?'<div><b>À travailler :</b> '+esc(P.w)+'</div>':'')+'</div>'+
+    '<p class="small muted" style="margin-top:8px">'+esc(P.src)+'. Repère : 50 % essentiel, 30 % plaisirs et engagements, 20 % épargne.</p>';}
+function renderPrev(){const el=$("t-prev");if(!el||!SOPH)return;const X=SOPH;
+  if(X.mode==="aucun"){el.innerHTML='<header><h2>Sophia prévoit</h2></header><p class="small muted">Notez vos dépenses pendant quelques jours : Sophia apprendra vos habitudes et anticipera la fin de la période. Chaque mois clôturé la rend plus précise.</p>';return;}
+  const d=X.B-X.V;const I=insights(X).slice(0,3);
+  el.innerHTML='<header><h2>Sophia prévoit</h2><span class="muted small">'+(X.mode==="appris"?"appris sur "+X.n+" mois":"d'après ce mois")+'</span></header>'+
+    '<p class="small muted">Vie courante d\'ici la paie du '+esc(jourCourt(X.P.next))+'</p><div class="big">'+esc(usd(X.V))+'</div>'+
+    (X.B>0?'<p class="small" style="margin-top:4px">'+(d>=0?'<b style="color:var(--ok)">'+esc(usd(d))+' d\'avance</b> sur votre budget de '+esc(usd(X.B)):'<b style="color:var(--crit)">'+esc(usd(-d))+' de dépassement</b> prévu sur '+esc(usd(X.B)))+'</p>':'')+
+    (I.length?'<div class="ins">'+I.map(x=>'<div class="'+x.s+'">'+esc(x.t)+'</div>').join("")+'</div>':'');}
+function insights(X){const I=[];const jours=Math.max(1,X.P.jours);
+  X.cats.filter(x=>x.budget>0&&x.proj>x.budget*1.05).sort((a,b)=>(b.proj-b.budget)-(a.proj-a.budget)).forEach(x=>{const lim=Math.max(0,x.budget-x.spent)/jours;
+    I.push({s:"warn",t:x.label+" : à votre rythme, "+usd(x.proj)+" pour "+usd(x.budget)+" prévus. Tenez-vous à "+usd(lim)+" par jour jusqu'à la paie."});});
+  if(X.n>=2)X.cats.filter(x=>x.hist>0&&x.spent>0).forEach(x=>{const last=X.past[X.past.length-1].sp[x.k]||0;if(last>x.hist*1.25&&last-x.hist>x.hist*0.1)I.push({s:"info",t:x.label+" a augmenté le mois dernier : "+usd(last)+" contre "+usd(x.hist)+" en moyenne."});});
+  if(X.jour)I.push({s:"info",t:"Vous dépensez surtout "+X.jour.j+" ("+pct(X.jour.part)+" de vos dépenses courantes). C'est le jour à préparer : liste et montant fixés à l'avance."});
+  X.cats.filter(x=>!x.budget&&x.reg>=2&&x.hist>0).forEach(x=>I.push({s:"info",t:x.label+" revient presque chaque mois (environ "+usd(x.hist)+"). Prévoyez-le comme un poste, pas comme un imprévu."}));
+  if(!I.length&&X.B>0&&X.V<=X.B)I.push({s:"ok",t:"Tous vos postes sont dans les clous à ce rythme. Continuez ainsi."});
+  return I;}
+function mmChart(H,sel){const L=H.slice(-8);if(!L.length)return"";const W=340,Hh=150,pl=6,pb=22,pt=16;const B=SOPH?SOPH.B:0;
+  const mx=Math.max(B,...L.map(h=>h.dep),1)*1.12;const bw=Math.min(34,(W-pl*2)/L.length-8);const step=(W-pl*2)/L.length;
+  const y=v=>pt+(Hh-pt-pb)*(1-v/mx);
+  let g='<line x1="0" x2="'+W+'" y1="'+(Hh-pb)+'" y2="'+(Hh-pb)+'" stroke="var(--line)"/>';
+  if(B>0)g+='<line x1="0" x2="'+W+'" y1="'+y(B)+'" y2="'+y(B)+'" stroke="var(--ink)" stroke-dasharray="4 4" opacity=".5"/><text x="'+(W-2)+'" y="'+(y(B)-4)+'" text-anchor="end">budget '+esc(usd(B))+'</text>';
+  L.forEach((h,i)=>{const x=pl+i*step+(step-bw)/2,top=y(h.dep),hh=Math.max(0,Hh-pb-top);const lab=h.start.toLocaleDateString("fr-FR",{month:"short"});
+    g+='<g class="bar'+(h.s===sel?' sel':'')+'" data-mm="'+h.s+'" tabindex="0" role="button" aria-label="'+esc(lab+" : "+usd(h.dep))+'"><title>'+esc("Période du "+jourCourt(h.start)+" : "+usd(h.dep)+" de vie courante"+(h.cur?" (en cours)":""))+'</title>'+
+      '<rect x="'+(x-4)+'" y="'+pt+'" width="'+(bw+8)+'" height="'+(Hh-pb-pt)+'" fill="transparent"/>'+
+      (hh>0?'<path class="m" d="M'+x+','+(Hh-pb)+'V'+(top+4)+'q0,-4 4,-4h'+(bw-8)+'q4,0 4,4V'+(Hh-pb)+'z" fill="var(--c1)" opacity="'+(h.cur?0.55:1)+'"/>':'')+
+      '<text x="'+(x+bw/2)+'" y="'+(Hh-6)+'" text-anchor="middle">'+esc(h.cur?"en cours":lab)+'</text></g>';});
+  return '<svg class="mch" viewBox="0 0 '+W+' '+Hh+'" role="group" aria-label="Vie courante par période de paie">'+g+'</svg>';}
+function renderMois(){const el=$("mm-chart");if(!el||!SOPH)return;const H=SOPH.H;
+  if(!H.length){el.innerHTML='<p class="small muted">Votre historique se construit tout seul : chaque période de paie est gardée ici, avec vos dépenses par poste, pour comparer les mois entre eux.</p>';$("mm-det").innerHTML="";return;}
+  if(!mmSel||!H.some(h=>h.s===mmSel))mmSel=H[H.length-1].s;
+  el.innerHTML=mmChart(H,mmSel);
+  const i=H.findIndex(h=>h.s===mmSel),h=H[i];const sn=S.histo&&S.histo[h.s];
+  const keys=Object.keys(h.sp).concat(Object.keys(SOPH.avg)).filter((k,j,a)=>a.indexOf(k)===j).filter(k=>(h.sp[k]||0)>0||(SOPH.avg[k]||0)>0).sort((a,b)=>(h.sp[b]||0)-(h.sp[a]||0));
+  const mx=Math.max(1,...keys.map(k=>Math.max(h.sp[k]||0,SOPH.avg[k]||0)));
+  const cmp=SOPH.avgDep>0&&!h.cur?h.dep/SOPH.avgDep-1:null;
+  $("mm-det").innerHTML='<div class="mmnav"><button type="button" data-mmgo="-1" aria-label="Mois précédent"'+(i>0?'':' disabled')+'>‹</button><b style="text-align:center">'+esc(jourCourt(h.start))+' – '+esc(jourCourt(new Date(h.next.getTime()-864e5)))+(h.cur?' (en cours)':'')+'</b><button type="button" data-mmgo="1" aria-label="Mois suivant"'+(i<H.length-1?'':' disabled')+'>›</button></div>'+
+    '<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="kpi"><span class="lbl">Vie courante</span><span class="v">'+esc(usd(h.dep))+'</span>'+(cmp!==null?'<span class="s">'+(cmp>=0?"+":"")+Math.round(cmp*100)+' % vs moyenne</span>':'')+'</div><div class="kpi"><span class="lbl">Charges payées</span><span class="v">'+esc(usd(h.fix))+'</span></div><div class="kpi"><span class="lbl">Recettes en plus</span><span class="v">'+esc(usd(h.rec))+'</span>'+(sn&&sn.mis>0?'<span class="s">'+esc(usd(sn.mis))+' mis de côté</span>':'')+'</div></div>'+
+    (keys.length?'<div class="hb">'+keys.map(k=>{const v=h.sp[k]||0,a=SOPH.avg[k]||0;return '<div><div class="l"><span>'+esc(sLab(k))+'</span><b class="num">'+esc(usd(v))+'</b></div><div class="t" title="'+esc(sLab(k)+" : "+usd(v)+(a?" · moyenne "+usd(a):""))+'"><i style="width:'+(v/mx*100).toFixed(1)+'%"></i>'+(a>0?'<u style="left:'+(a/mx*100).toFixed(1)+'%"></u>':'')+'</div></div>';}).join("")+'</div>'+
+      (SOPH.n?'<p class="small muted" style="margin-top:8px">Le trait vertical marque votre moyenne des '+SOPH.n+' derniers mois.</p>':''):'<p class="small muted">Aucune dépense courante notée sur cette période.</p>');}
+function bindSophia(){
+  $("mm-chart").addEventListener("click",e=>{const b=e.target.closest("[data-mm]");if(b){mmSel=b.dataset.mm;renderMois();}});
+  $("mm-chart").addEventListener("keydown",e=>{const b=e.target.closest("[data-mm]");if(b&&(e.key==="Enter"||e.key===" ")){e.preventDefault();mmSel=b.dataset.mm;renderMois();}});
+  $("mm-det").addEventListener("click",e=>{const b=e.target.closest("[data-mmgo]");if(!b||!SOPH)return;const H=SOPH.H;const i=H.findIndex(h=>h.s===mmSel)+(+b.dataset.mmgo);if(H[i]){mmSel=H[i].s;renderMois();}});
 }
 // --- assistant de démarrage ---
 const PRESETS=[["Loyer","logement"],["Électricité et eau","logement"],["Aide à la famille","famille"],["Crédit ou remboursement","dette"],["École des enfants","autre"],["Téléphone et internet","abonnements"],["Église, tontine ou épargne","eglise"]];
@@ -1810,12 +1971,13 @@ const TOUR=[
  {t:"aujourdhui",sel:"#t-hero",h:"1. Combien il vous reste",p:"En haut de l'accueil : ce que vous pouvez encore dépenser pour la vie courante jusqu'à la prochaine paie, et le montant conseillé par jour."},
  {t:"aujourdhui",sel:"#t-btns",h:"2. Noter une dépense",p:"« J'ai dépensé » : tapez le montant, touchez le poste, validez. Un bandeau permet d'annuler juste après. Ou « Photo du ticket » : le montant, le poste et la date sont lus pour vous."},
  {t:"aujourdhui",sel:"#t-todo-p",h:"3. À faire",p:"Les charges fixes à payer (touchez « Payé » quand c'est réglé) et les alertes du moment. Quand tout est vert, tout va bien."},
- {t:"journal",sel:"#pl-var",h:"4. Dépenses : le détail",p:"L'onglet « Dépenses » garde tout : chaque poste avec son reste, les charges payées, les recettes, l'historique, et la création d'un nouveau poste."},
- {t:"projets",sel:"#f-avis",h:"5. Est-ce raisonnable ?",p:"Avant un achat important, décrivez-le ici : l'application donne un verdict et une autre solution si ce n'est pas le moment."},
- {t:"projets",sel:"#f-obj",h:"6. Objectif et projets",p:"Votre objectif d'épargne mensuel et vos projets, avec la date à laquelle chacun sera financé."},
- {t:"conseils",sel:"#ct-list",h:"7. Conseils",p:"Les gestes qui rapportent le plus, le plus important en premier. En dessous : plafonds de la semaine, placements et bilan détaillé."},
- {t:"aujourdhui",sel:"#h-pf",h:"8. Plusieurs portefeuilles",p:"Le bouton 👛 en haut ouvre vos portefeuilles : créez-en un pour le ménage, une activité, un projet ou l'argent d'un proche, renommez-les, et passez de l'un à l'autre. Chacun a son budget ; la vue d'ensemble additionne tout."},
- {t:"parametres",sel:"[data-view=parametres] .panel",h:"9. Réglages",p:"La roue dentée en haut ouvre vos réglages : jour de paie, revenus, charges, mot de passe, sauvegarde. Vous pouvez y relancer l'assistant de démarrage ou tout remettre à zéro."},
+ {t:"aujourdhui",sel:"#t-prev",h:"4. Sophia prévoit, votre profil",p:"Sophia apprend de vos dépenses mois après mois : elle prévoit la fin de la période, signale les postes qui dérapent et dresse votre profil financier (essentiel, engagements, plaisirs, épargne)."},
+ {t:"journal",sel:"#pl-var",h:"5. Dépenses : le détail",p:"L'onglet « Dépenses » garde tout : chaque poste avec son reste, les charges payées, les recettes, l'historique, « Mes mois » pour comparer les périodes de paie, et la création d'un nouveau poste."},
+ {t:"projets",sel:"#f-avis",h:"6. Est-ce raisonnable ?",p:"Avant un achat important, décrivez-le ici : l'application donne un verdict et une autre solution si ce n'est pas le moment."},
+ {t:"projets",sel:"#f-obj",h:"7. Objectif et projets",p:"Votre objectif d'épargne mensuel et vos projets, avec la date à laquelle chacun sera financé."},
+ {t:"conseils",sel:"#ct-list",h:"8. Conseils",p:"Les gestes qui rapportent le plus, le plus important en premier. En dessous : plafonds de la semaine, placements et bilan détaillé."},
+ {t:"aujourdhui",sel:"#h-pf",h:"9. Plusieurs portefeuilles",p:"Le bouton 👛 en haut ouvre vos portefeuilles : créez-en un pour le ménage, une activité, un projet ou l'argent d'un proche, renommez-les, et passez de l'un à l'autre. Chacun a son budget ; la vue d'ensemble additionne tout."},
+ {t:"parametres",sel:"[data-view=parametres] .panel",h:"10. Réglages",p:"La roue dentée en haut ouvre vos réglages : jour de paie, revenus, charges, mot de passe, sauvegarde. Vous pouvez y relancer l'assistant de démarrage ou tout remettre à zéro."},
  {t:"aujourdhui",sel:null,h:"C'est parti !",p:"Le jour de la paie, un bilan de la période s'affichera et vous proposera de mettre le reste de côté. Bonne gestion !"}];
 let tourI=-1;
 function tourSeen(){try{return localStorage.getItem("bka-demo2")==="1";}catch(e){return true;}}
@@ -1842,7 +2004,7 @@ function bindTour(){
 }
 bindSettings();bindConseils();bindProjets();bindJournal();bindAvis();route();renderAll();
 $("f-avis").requestSubmit();
-bindLock();bindBackup();bindBio();bindScan();bindPf();bindZero();bindParcours();bindTour();start();
+bindLock();bindBackup();bindBio();bindScan();bindPf();bindZero();bindSophia();bindParcours();bindTour();start();
 })();
 </script>
 
