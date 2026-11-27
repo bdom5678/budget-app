@@ -1246,6 +1246,20 @@ bindLock();bindBackup();bindBio();bindScan();bindTour();start();
 })();
 </script>
 
+<script>
+(function(){
+  var NS="budget-app-0caec84a",VER="partage",API="https://abacus.jasoncameron.dev/";
+  window.STAT_API=API;window.STAT_NS=NS;
+  if(window.claude)return;
+  function hit(k){try{fetch(API+"hit/"+NS+"/"+VER+"-"+k,{mode:"cors",cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"}).catch(function(){});}catch(e){}}
+  window.addEventListener("load",function(){setTimeout(function(){
+    try{if(!sessionStorage.getItem("stat-open")){sessionStorage.setItem("stat-open","1");hit("ouvertures");}}catch(e){}
+    try{var key="stat-appareil-"+VER;if(!localStorage.getItem(key)){localStorage.setItem(key,"1");hit("utilisateurs");}}catch(e){}
+  },1500);});
+})();
+</script>
+
+
 <script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
 </body>
 </html>

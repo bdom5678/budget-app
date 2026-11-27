@@ -414,6 +414,11 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
   <!-- PARAMÈTRES -->
   <section data-view="parametres" hidden>
     <div class="stack">
+      <div class="panel" id="stat-panel">
+        <header><h2>Utilisation des versions</h2><button type="button" id="stat-btn">Actualiser</button></header>
+        <p class="small muted" style="margin-bottom:10px">Nombre de téléphones qui ont installé ou ouvert chaque version, et nombre total d'ouvertures. Ce compteur est anonyme : il ne reçoit aucun chiffre ni nom.</p>
+        <div class="tbl"><table id="stat-t"><tr><td class="muted">Touchez « Actualiser ».</td></tr></table></div>
+      </div>
       <div class="panel" id="sec-panel">
         <header><h2>Sécurité</h2><span class="chip" id="sec-chip"></span></header>
         <div id="sec-off">
@@ -1254,6 +1259,35 @@ function bindTour(){
 bindSettings();bindConseils();bindProjets();bindJournal();bindAvis();route();renderAll();
 $("f-avis").requestSubmit();
 bindLock();bindBackup();bindBio();bindScan();bindTour();start();
+})();
+</script>
+
+<script>
+(function(){
+  var NS="budget-app-0caec84a",VER="perso",API="https://abacus.jasoncameron.dev/";
+  window.STAT_API=API;window.STAT_NS=NS;
+  if(window.claude)return;
+  function hit(k){try{fetch(API+"hit/"+NS+"/"+VER+"-"+k,{mode:"cors",cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"}).catch(function(){});}catch(e){}}
+  window.addEventListener("load",function(){setTimeout(function(){
+    try{if(!sessionStorage.getItem("stat-open")){sessionStorage.setItem("stat-open","1");hit("ouvertures");}}catch(e){}
+    try{var key="stat-appareil-"+VER;if(!localStorage.getItem(key)){localStorage.setItem(key,"1");hit("utilisateurs");}}catch(e){}
+  },1500);});
+})();
+</script>
+
+<script>
+(function(){
+  var V=[["perso","Ma version"],["partage","Version partagée"],["abidjan","Version Abidjan"]];
+  var nf=new Intl.NumberFormat("fr-FR");
+  function get(k){return fetch(window.STAT_API+"get/"+window.STAT_NS+"/"+k,{cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"}).then(function(r){if(r.status===404)return 0;if(!r.ok)throw new Error(r.status);return r.json().then(function(j){return +j.value||0;});});}
+  function load(){var t=document.getElementById("stat-t");if(!t)return;t.innerHTML='<tr><td class="muted">Chargement…</td></tr>';
+    Promise.all(V.map(function(v){return Promise.all([get(v[0]+"-utilisateurs"),get(v[0]+"-ouvertures")]);})).then(function(R){
+      var tu=0,to=0;var rows=V.map(function(v,i){tu+=R[i][0];to+=R[i][1];return '<tr><td>'+v[1]+'</td><td class="r num">'+nf.format(R[i][0])+'</td><td class="r num">'+nf.format(R[i][1])+'</td></tr>';}).join("");
+      t.innerHTML='<tr><th>Version</th><th class="r">Téléphones</th><th class="r">Ouvertures</th></tr>'+rows+'<tr><td><b>Total</b></td><td class="r num"><b>'+nf.format(tu)+'</b></td><td class="r num"><b>'+nf.format(to)+'</b></td></tr>';
+    }).catch(function(){t.innerHTML='<tr><td class="muted">Compteur injoignable pour le moment. Vérifiez la connexion et réessayez.</td></tr>';});}
+  document.getElementById("stat-btn").addEventListener("click",load);
+  window.addEventListener("hashchange",function(){if(location.hash==="#parametres")load();});
+  if(location.hash==="#parametres")setTimeout(load,800);
 })();
 </script>
 
