@@ -184,7 +184,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
       <h1>Budget Kin–Abidjan</h1>
     </div>
     <div class="meta">
-      <span class="pill">Mois <b id="h-mois"></b></span>
+      <span class="pill">Paie dans <b id="h-mois"></b></span>
       <span class="pill">1 USD = <b id="h-taux" class="num"></b> F CFA</span>
       <span class="pill" id="h-save">Enregistrement local</span>
     </div>
@@ -339,7 +339,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
     <div class="grid">
       <div class="stack">
         <div class="panel">
-          <header><h2>Plan de <span id="pl-mois"></span></h2><span class="muted small" id="pl-jours"></span></header>
+          <header><h2 id="pl-mois"></h2><span class="chip info" id="pl-jours"></span></header>
           <div class="kpis" id="pl-kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
           <p class="note" id="pl-jour" style="margin-top:12px"></p>
           <h3 style="margin:18px 0 6px">Charges fixes : cochez quand c'est payé</h3>
@@ -390,7 +390,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
           </form>
         </div>
         <div class="panel">
-          <header><h2>Mouvements de <span id="j-mois"></span></h2><span class="muted small" id="j-total"></span></header>
+          <header><h2>Mouvements <span id="j-mois"></span></h2><span class="muted small" id="j-total"></span></header>
           <div id="j-list"></div>
         </div>
       </div>
@@ -454,6 +454,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
         <form class="f" id="f-set" onsubmit="return false">
           <div class="fld"><label for="s-taux">Taux : 1 USD en F CFA</label><input id="s-taux" type="number" min="1" step="1"></div>
           <div class="fld"><label for="s-tauxcdf">Taux : 1 USD en francs congolais (FC)</label><input id="s-tauxcdf" type="number" min="1" step="1"></div>
+          <div class="fld"><label for="s-paie">Jour de paie dans le mois</label><input id="s-paie" type="number" min="1" max="31" step="1"></div>
           <div class="fld"><label for="s-dime">Dîme (% des revenus)</label><input id="s-dime" type="number" min="0" max="100" step="0.5"></div>
           <div class="fld"><label for="s-dimebase">Dîme calculée sur</label><select id="s-dimebase"><option value="total">Tous les revenus</option><option value="kin">Revenus de Kinshasa seulement</option></select></div>
           <div class="fld"><label for="s-dimelieu">Dîme payée depuis</label><select id="s-dimelieu"><option value="kin">Kinshasa</option><option value="abj">Abidjan</option></select></div>
@@ -529,6 +530,18 @@ const both=v=>usd(v)+" · "+xof(v*S.taux);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
 const moisNom=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+const pad2=n=>String(n).padStart(2,"0");
+const isoD=d=>d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+const jourCourt=d=>d.toLocaleDateString("fr-FR",{day:"numeric",month:"long"});
+function periode(){
+  const j=Math.min(31,Math.max(1,+S.jourPaie||25));const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const at=(y,m)=>{const d=new Date(y,m,1);return new Date(d.getFullYear(),d.getMonth(),Math.min(j,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));};
+  let start=at(today.getFullYear(),today.getMonth());if(today<start)start=at(today.getFullYear(),today.getMonth()-1);
+  const next=at(start.getFullYear(),start.getMonth()+1);
+  const jours=Math.round((next-today)/864e5),total=Math.round((next-start)/864e5);
+  return{start,next,jours,total,ecoules:total-jours,startISO:isoD(start),nextISO:isoD(next)};
+}
+const dansPeriode=(e,P)=>{const d=e.date||"";return d>=P.startISO&&d<P.nextISO;};
 const curMonth=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");};
 
 // ---------- calculs ----------
@@ -578,14 +591,15 @@ function alertes(c){
   const jm=journalMois(c);
   jm.postes.forEach(p=>{if(p.budget>0&&p.spent>p.budget)A.unshift({s:"crit",t:"Budget « "+p.label+" » dépassé",p:"Dépensé "+usd(p.spent)+" pour "+usd(p.budget)+" prévus ce mois."});else if(p.budget>0&&p.spent>p.budget*0.8)A.unshift({s:"warn",t:"« "+p.label+" » à "+pct(p.spent/p.budget),p:"Il reste "+usd(p.budget-p.spent)+" sur ce poste pour le mois."});});
   const pl=planMois(c,jm);
-  if(pl.nonPayees)A.unshift({s:"info",t:"Reste à payer ce mois : "+usd(pl.reste),p:pl.nonPayees+" charge"+(pl.nonPayees>1?"s fixes":" fixe")+" pas encore réglée"+(pl.nonPayees>1?"s":"")+" ("+usd(pl.resteFixes)+") et "+usd(pl.resteVar)+" encore disponibles pour la vie courante. Détail dans Dépenses & recettes."});
+  if(pl.nonPayees)A.unshift({s:"info",t:"Reste à payer d'ici la paie : "+usd(pl.reste),p:pl.nonPayees+" charge"+(pl.nonPayees>1?"s fixes":" fixe")+" pas encore réglée"+(pl.nonPayees>1?"s":"")+" ("+usd(pl.resteFixes)+") et "+usd(pl.resteVar)+" encore disponibles pour la vie courante. Détail dans Dépenses & recettes."});
+  A.unshift({s:"info",t:pl.P.jours===0?"C'est jour de paie":"Prochaine paie dans "+pl.P.jours+" jour"+(pl.P.jours>1?"s":"")+" ("+jourCourt(pl.P.next)+")",p:"Dépenses courantes conseillées d'ici là : "+usd(pl.resteVar/Math.max(1,pl.P.jours))+" par jour au maximum."});
   if(jm.rec>0)A.unshift({s:"ok",t:"Recettes en plus ce mois : "+usd(jm.rec),p:"Mon conseil : placez au moins la moitié ("+usd(jm.rec/2)+") sur vos projets avant qu'elle ne se dilue dans le quotidien"+(S.dimePct>0?", et prévoyez la dîme ("+usd(jm.rec*S.dimePct/100)+")":"")+"."});
   if(jm.hors>0){const base=Math.max(c.marge,0)+jm.rec;const r=base>0?jm.hors/base:1;A.unshift({s:r>1?"crit":r>0.5?"warn":"info",t:"Imprévus du mois : "+usd(jm.hors),p:r>1?"Ils dépassent votre marge libre : l'objectif d'épargne de ce mois ne sera pas atteint.":"Ils consomment "+pct(Math.min(r,1))+" de votre marge libre"+(jm.rec?" augmentée des recettes":"")+" ("+usd(base)+")."});}
   return A;
 }
 
 function journalMois(c){
-  const m=curMonth();const all=J.filter(e=>(e.date||"").slice(0,7)===m);
+  const P=periode();const all=J.filter(e=>dansPeriode(e,P));
   const items=all.filter(e=>e.type!=="recette");const recettes=all.filter(e=>e.type==="recette");
   const rec=recettes.reduce((a,e)=>a+toUSD(e.montant,e.devise),0);
   const budgets={};
@@ -608,8 +622,8 @@ function planMois(c,jm){
   const prevu=fixes.reduce((a,f)=>a+f.prevuU,0)+vars.reduce((a,v)=>a+v.budget,0);
   const resteFixes=fixes.filter(f=>!f.paid.length).reduce((a,f)=>a+f.prevuU,0);
   const resteVar=vars.reduce((a,v)=>a+Math.max(0,v.reste),0);
-  const now=new Date();const dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();const jours=dim-now.getDate()+1;
-  return{fixes,vars,autres,prevu,resteFixes,resteVar,reste:resteFixes+resteVar,depense:jm.total,jours,nonPayees:fixes.filter(f=>!f.paid.length).length};
+  const P=periode();const jours=Math.max(1,P.jours);vars.forEach(v=>{v.parJour=Math.max(0,v.reste)/jours;v.rythme=v.budget>0&&P.total>0&&v.spent/v.budget>P.ecoules/P.total+0.15;});
+  return{P,fixes,vars,autres,prevu,resteFixes,resteVar,reste:resteFixes+resteVar,depense:jm.total,jours,nonPayees:fixes.filter(f=>!f.paid.length).length};
 }
 
 // ---------- projets ----------
@@ -719,7 +733,7 @@ function renderConseils(c){
 function renderAll(){
   const c=calc();
   $("h-taux").textContent=nf0.format(S.taux);
-  $("h-mois").textContent=moisNom(new Date());
+  {const P=periode();$("h-mois").textContent=P.jours+" j";}
   renderBord(c);renderProjets(c);renderConseils(c);renderJournal(c);renderSettings();renderSecurity();
   $("a-ai").disabled=!sample;$("q-btn").disabled=!sample;$("a-ai").hidden=!sample;$("q-panel").hidden=!sample;
 }
@@ -785,10 +799,11 @@ function renderProjets(c){
 function renderJournal(c){
   const jm=journalMois(c);
   const pl=planMois(c,jm);
-  $("pl-mois").textContent=moisNom(new Date());
-  $("pl-jours").textContent=pl.jours+" jour"+(pl.jours>1?"s":"")+" restant"+(pl.jours>1?"s":"");
+  $("pl-mois").textContent="De paie à paie : du "+jourCourt(pl.P.start)+" au "+jourCourt(new Date(pl.P.next-864e5));
+  $("pl-jours").textContent=pl.P.jours===0?"Paie aujourd'hui":"Paie dans "+pl.P.jours+" jour"+(pl.P.jours>1?"s":"")+" ("+jourCourt(pl.P.next)+")";
   $("pl-kpis").innerHTML=[{l:"Prévu ce mois",v:usd(pl.prevu)},{l:"Déjà dépensé",v:usd(pl.depense)},{l:"Reste à dépenser",v:usd(pl.reste),hl:1}].map(x=>'<div class="kpi'+(x.hl?' hl':'')+'"><span class="lbl">'+x.l+'</span><span class="v">'+x.v+'</span></div>').join("");
-  $("pl-jour").textContent=pl.resteVar>0?"Pour la vie courante, il vous reste "+usd(pl.resteVar)+", soit "+usd(pl.resteVar/pl.jours)+" par jour jusqu'à la fin du mois.":"Les enveloppes de vie courante sont vides pour ce mois : toute nouvelle dépense est prise sur votre marge.";
+  const trop=pl.vars.filter(v=>v.rythme).map(v=>v.label.toLowerCase());
+  $("pl-jour").textContent=(pl.resteVar>0?"Jusqu'à la paie du "+jourCourt(pl.P.next)+", il vous reste "+usd(pl.resteVar)+" pour la vie courante, soit "+usd(pl.resteVar/Math.max(1,pl.P.jours))+" par jour"+(pl.P.jours>=7?" ("+usd(pl.resteVar/pl.P.jours*7)+" par semaine)":"")+".":"Les enveloppes de vie courante sont vides jusqu'à la paie du "+jourCourt(pl.P.next)+" : toute nouvelle dépense est prise sur votre marge.")+(trop.length?" Attention, vous dépensez trop vite pour : "+trop.join(", ")+".":"");
   const fm=fmtDev;
   $("pl-fixes").innerHTML=pl.fixes.map(f=>{
     const head='<div class="t"><span>'+esc(f.label)+'</span><span class="small muted num">Prévu '+fm(f.montant,f.devise)+'</span></div>';
@@ -797,13 +812,13 @@ function renderJournal(c){
     '<div class="row tot" style="margin-top:4px"><span>Reste à payer</span><span class="num">'+usd(pl.resteFixes)+'</span></div>';
   const dev=$("pl-dev").value;
   $("pl-var").innerHTML=pl.vars.map(v=>{const col=v.reste<0?'--crit':v.budget&&v.reste<v.budget*0.2?'--warn':'--ok';
-    return '<div class="fx"><div class="t"><span>'+esc(v.label)+'</span><span class="small muted num">'+(v.budget?"Prévu "+usd(v.budget)+" · ":"")+'Dépensé '+usd(v.spent)+'</span></div>'+
+    return '<div class="fx"><div class="t"><span>'+esc(v.label)+'</span><span class="small muted num">'+(v.budget?"Prévu "+usd(v.budget)+" · ":"")+'Dépensé '+usd(v.spent)+(v.budget&&v.reste>0?" · conseillé "+usd(v.parJour)+"/jour":"")+'</span>'+(v.rythme?'<span class="chip warn" style="align-self:flex-start;margin-top:3px">Rythme trop rapide</span>':'')+'</div>'+
     '<div class="a"><span class="num" style="font-weight:600;color:var('+col+')">'+(v.budget?(v.reste<0?"Dépassé de "+usd(-v.reste):"Reste "+usd(v.reste)):"Sans budget")+'</span></div>'+
     '<div class="a" style="flex-basis:100%"><input type="number" min="0" step="any" inputmode="decimal" data-add="'+esc(v.k)+'" placeholder="Montant en '+(dev==="XOF"?"F CFA":dev==="CDF"?"FC":"USD")+'" aria-label="Nouvelle dépense pour '+esc(v.label)+'" style="width:auto;flex:1 1 140px"><button data-addbtn="'+esc(v.k)+'">Déduire</button>'+
     (v.spent>0?'<button class="ghost" data-undo="'+esc(v.k)+'">Annuler la dernière</button>':'')+(v.perso?'<button class="ghost" data-delpp="'+esc(v.k.slice(3))+'">Supprimer le poste</button>':'')+'</div></div>';}).join("")+
     (pl.autres.length?'<div class="fx"><div class="t"><span>Autres dépenses notées</span><span class="small muted">'+esc(pl.autres.map(a=>a.label).join(", "))+'</span></div><div class="a"><span class="num">'+usd(pl.autres.reduce((x,a)=>x+a.spent,0))+'</span></div></div>':'')+
     '<div class="row tot" style="margin-top:4px"><span>Reste dans les enveloppes</span><span class="num">'+usd(pl.resteVar)+'</span></div>';
-  $("j-mois").textContent=moisNom(new Date());
+  $("j-mois").textContent="depuis la paie du "+jourCourt(periode().start);
   $("j-total").textContent=jm.all.length?"Dépenses "+usd(jm.total)+(jm.rec?" · Recettes "+usd(jm.rec):""):"";
   if(!jm.all.length)$("j-list").innerHTML='<p class="empty">Rien de noté ce mois. Ajoutez une dépense ou une recette avec le formulaire ci-dessus : chaque dépense est comparée à votre budget et déclenche une alerte à 80 % puis à 100 %.</p>';
   else $("j-list").innerHTML='<div class="tbl"><table><tr><th>Date</th><th>Libellé</th><th>Poste</th><th class="r">Montant</th><th></th></tr>'+jm.all.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const r=e.type==="recette";return '<tr><td class="num">'+esc(e.date.slice(8,10)+"/"+e.date.slice(5,7))+'</td><td>'+esc(e.label)+'</td><td class="muted">'+esc(r?(RCATS[e.cat]||e.cat):catLabel(e.cat))+'</td><td class="r num'+(r?' plus':'')+'">'+(r?"+ ":"")+fmtDev(+e.montant,e.devise)+'</td><td class="r"><button class="ghost" data-del-j="'+esc(e.id)+'">Supprimer</button></td></tr>';}).join("")+'</table></div>';
@@ -813,7 +828,7 @@ function renderJournal(c){
 }
 
 function renderSettings(){
-  [["s-taux","taux"],["s-tauxcdf","tauxCDF"],["s-dime","dimePct"],["s-dimebase","dimeBase"],["s-dimelieu","dimeLieu"]].forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=S[k];});
+  [["s-taux","taux"],["s-tauxcdf","tauxCDF"],["s-paie","jourPaie"],["s-dime","dimePct"],["s-dimebase","dimeBase"],["s-dimelieu","dimeLieu"]].forEach(([id,k])=>{if(document.activeElement!==$(id))$(id).value=S[k];});
   const sel=(opts,v,attr)=>'<select '+attr+'>'+Object.entries(opts).map(([k,l])=>'<option value="'+k+'"'+(k===v?" selected":"")+'>'+esc(l)+'</option>').join("")+'</select>';
   const rowRev=r=>'<tr data-id="'+esc(r.id)+'"><td><input data-k="label" value="'+esc(r.label)+'" aria-label="Libellé"></td><td><input data-k="montant" type="number" step="any" value="'+esc(r.montant)+'" aria-label="Montant" style="min-width:110px"></td><td>'+sel({USD:"USD",XOF:"F CFA"},r.devise,'data-k="devise" aria-label="Devise"')+'</td><td>'+sel(LIEUX,r.lieu,'data-k="lieu" aria-label="Lieu"')+'</td>';
   $("t-rev").innerHTML='<tr><th>Libellé</th><th>Montant</th><th>Devise</th><th>Versé à</th><th></th></tr>'+S.revenus.map(r=>rowRev(r)+'<td><button class="ghost" data-del="rev">Supprimer</button></td></tr>').join("");
@@ -1107,7 +1122,7 @@ const on=!!LOCK;$("sec-off").hidden=on;$("sec-on").hidden=!on;const bw=$("bio-wr
 
 // ---------- événements ----------
 function bindSettings(){
-  $("f-set").addEventListener("change",e=>{const m={"s-taux":"taux","s-tauxcdf":"tauxCDF","s-dime":"dimePct","s-dimebase":"dimeBase","s-dimelieu":"dimeLieu"};const k=m[e.target.id];if(!k)return;let v=e.target.value;if(k==="taux"||k==="tauxCDF"||k==="dimePct")v=Math.max(k==="dimePct"?0:1,+v||0);S[k]=v;changed();});
+  $("f-set").addEventListener("change",e=>{const m={"s-taux":"taux","s-tauxcdf":"tauxCDF","s-paie":"jourPaie","s-dime":"dimePct","s-dimebase":"dimeBase","s-dimelieu":"dimeLieu"};const k=m[e.target.id];if(!k)return;let v=e.target.value;if(k==="taux"||k==="tauxCDF"||k==="dimePct"||k==="jourPaie")v=Math.max(k==="dimePct"?0:1,+v||0);if(k==="jourPaie")v=Math.min(31,Math.round(v));S[k]=v;changed();});
   const tbl=(tid,key)=>{
     $(tid).addEventListener("change",e=>{const tr=e.target.closest("tr");const k=e.target.dataset.k;if(!tr||!k)return;const it=S[key].find(x=>x.id===tr.dataset.id);if(!it)return;it[k]=k==="montant"?(+e.target.value||0):e.target.value;changed();});
     $(tid).addEventListener("click",e=>{const b=e.target.closest("[data-del]");if(!b)return;const id=b.closest("tr").dataset.id;S[key]=S[key].filter(x=>x.id!==id);changed();});};
@@ -1138,7 +1153,7 @@ function bindJournal(){
     if(btn)btn.disabled=false;};
   $("pl-var").addEventListener("click",async e=>{
     const ab=e.target.closest("[data-addbtn]");if(ab){addTo(ab.dataset.addbtn,ab);return;}
-    const ub=e.target.closest("[data-undo]");if(ub&&!locked()){const k=ub.dataset.undo;const m=curMonth();const last=J.filter(x=>x.cat===k&&x.type!=="recette"&&(x.date||"").slice(0,7)===m).sort((x,y)=>(x.date+x.id).localeCompare(y.date+y.id)).pop();if(last)try{await backend.delJ(last.id);}catch(err){}return;}
+    const ub=e.target.closest("[data-undo]");if(ub&&!locked()){const k=ub.dataset.undo;const P=periode();const last=J.filter(x=>x.cat===k&&x.type!=="recette"&&dansPeriode(x,P)).sort((x,y)=>(x.date+x.id).localeCompare(y.date+y.id)).pop();if(last)try{await backend.delJ(last.id);}catch(err){}return;}
     const db=e.target.closest("[data-delpp]");if(db){S.postesPerso=S.postesPerso.filter(pp=>pp.id!==db.dataset.delpp);changed();}
   });
   $("pl-var").addEventListener("keydown",e=>{const k=e.target.dataset&&e.target.dataset.add;if(k&&e.key==="Enter"){e.preventDefault();addTo(k,null);}});
