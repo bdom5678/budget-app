@@ -154,6 +154,16 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
 @media (max-width:520px){.scan{grid-template-columns:minmax(0,1fr)}.scan img{width:100%;max-height:160px}}
 .empty{padding:18px;text-align:center;color:var(--muted);font-size:.9rem;border:1px dashed var(--line);border-radius:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Guide pas à pas */
+.tour-hl{outline:3px solid var(--ochre)!important;outline-offset:4px;border-radius:8px;position:relative;z-index:41}
+#tour{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:60;max-width:520px;margin:0 auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:14px 16px}
+#tour .tn{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+#tour h3{margin:4px 0 6px;font-size:1.05rem}
+#tour p{margin:0 0 12px;font-size:.92rem;line-height:1.45}
+#tour .tb{display:flex;gap:8px;justify-content:space-between;align-items:center}
+#tour .tb div{display:flex;gap:8px}
+#tour-dim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:40;pointer-events:none}
 </style>
 
 <div id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-t">
@@ -187,6 +197,7 @@ label.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--ac
       <span class="pill">Paie dans <b id="h-mois"></b></span>
       <span class="pill" hidden><b id="h-taux" class="num"></b></span>
       <span class="pill" id="h-save">Enregistrement local</span>
+      <button type="button" class="pill" id="h-guide" style="border:0;cursor:pointer;color:var(--accent);font-weight:600">? Guide</button>
     </div>
   </header>
 
@@ -1193,9 +1204,47 @@ function route(){const v=(location.hash||"#bord").slice(1);const ok=["bord","avi
   document.querySelectorAll("[data-view]").forEach(s=>s.hidden=s.dataset.view!==ok);
   document.querySelectorAll("nav.tabs a").forEach(a=>a.getAttribute("href")==="#"+ok?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));}
 window.addEventListener("hashchange",route);
+// ---------- guide pas à pas ----------
+const TOUR=[
+ {t:"bord",sel:null,h:"Bienvenue",p:"Ce petit guide vous montre en une minute comment utiliser l'application. Touchez « Suivant » pour avancer, ou « Passer » pour le fermer. Vous pourrez le relancer à tout moment avec le bouton « ? Guide » en haut."},
+ {t:"parametres",sel:"#t-rev",h:"1. Vos chiffres d'abord",p:"Dans « Mes chiffres », saisissez vos revenus du mois puis, juste en dessous, vos charges fixes (loyer, crédit, factures, aides à la famille…). Touchez « Ajouter » pour créer une ligne. Tout est enregistré automatiquement."},
+ {t:"parametres",sel:"#s-paie",h:"2. Votre jour de paie",p:"Indiquez le jour du mois où vous êtes payé. Le budget est alors calculé de paie à paie, et le compteur « Paie dans … » en haut vous dit combien de jours il reste."},
+ {t:"bord",sel:"#kpis",h:"3. Le tableau de bord",p:"Revenus, charges, excédent et taux d'épargne en un coup d'œil. Les alertes juste en dessous vous signalent ce qui mérite votre attention, et le chiffre rouge sur l'onglet indique leur nombre."},
+ {t:"journal",sel:"#pl-fixes",h:"4. Cocher les charges payées",p:"Dans « Dépenses & recettes », touchez « Payé » quand vous réglez une charge fixe (loyer, facture…). Vous voyez ainsi ce qui reste à payer d'ici la prochaine paie."},
+ {t:"journal",sel:"#pl-var",h:"5. Noter une dépense du quotidien",p:"Tapez le montant dans la ligne du poste (courses, transport, sorties…) puis touchez « Déduire ». Le reste et le montant conseillé par jour se mettent à jour aussitôt. « Annuler la dernière » corrige une erreur."},
+ {t:"journal",sel:"label[for=scan-file]",h:"6. Ou prendre le ticket en photo",p:"Au lieu de taper le montant, photographiez le ticket de caisse. L'application lit le total, propose le poste et la date : vérifiez, corrigez si besoin, puis validez."},
+ {t:"journal",sel:"#f-np",h:"7. Créer un poste ou noter une recette",p:"Si un poste de dépense n'existe pas, créez-le ici. Plus bas, vous pouvez aussi noter une recette ponctuelle (prime, vente, cadeau reçu) ou un imprévu."},
+ {t:"avis",sel:"#f-avis",h:"8. Est-ce raisonnable ?",p:"Avant un achat important, décrivez-le : montant, une fois ou chaque mois, besoin ou envie. Touchez « Analyser » : l'application donne un verdict et une alternative si ce n'est pas le moment."},
+ {t:"projets",sel:"#f-obj",h:"9. Objectif et projets",p:"Fixez votre objectif d'épargne mensuel, puis ajoutez vos projets (terrain, véhicule, études…) avec leur coût et leur échéance. Le calendrier montre quand chacun sera financé."},
+ {t:"conseils",sel:"#t-sb",h:"10. Optimiser & investir",p:"Réglez vos plafonds de dépenses par semaine et découvrez combien vous pouvez gagner chaque mois, puis des pistes de placement adaptées à votre excédent."},
+ {t:"parametres",sel:"#sec-panel",h:"11. Protéger vos données",p:"Vos chiffres restent sur votre téléphone. Ajoutez un mot de passe (et l'empreinte ou le visage si votre téléphone le permet), et faites de temps en temps une sauvegarde."},
+ {t:"bord",sel:null,h:"C'est parti !",p:"Commencez par « Mes chiffres », puis notez vos dépenses au fil de l'eau. Le bouton « ? Guide » en haut relance ce guide quand vous voulez."}];
+let tourI=-1;
+function tourSeen(){try{return localStorage.getItem("mba-demo")==="1";}catch(e){return true;}}
+function tourMark(){try{localStorage.setItem("mba-demo","1");}catch(e){}}
+function tourClear(){document.querySelectorAll(".tour-hl").forEach(e=>e.classList.remove("tour-hl"));}
+function tourEnd(){tourClear();tourI=-1;const t=$("tour");if(t)t.remove();const d=$("tour-dim");if(d)d.remove();tourMark();}
+function tourShow(i){
+  tourI=i;const st=TOUR[i];tourClear();
+  if(("#"+st.t)!==location.hash){location.hash="#"+st.t;}
+  let box=$("tour");if(!box){const dim=document.createElement("div");dim.id="tour-dim";document.body.appendChild(dim);box=document.createElement("div");box.id="tour";box.setAttribute("role","dialog");box.setAttribute("aria-live","polite");document.body.appendChild(box);
+    box.addEventListener("click",e=>{const a=e.target.closest("[data-tour]");if(!a)return;const v=a.dataset.tour;if(v==="next"){if(tourI>=TOUR.length-1)tourEnd();else tourShow(tourI+1);}else if(v==="prev"){if(tourI>0)tourShow(tourI-1);}else tourEnd();});}
+  const last=i===TOUR.length-1;
+  box.innerHTML='<div class="tn">Guide · '+(i+1)+' / '+TOUR.length+'</div><h3>'+esc(st.h)+'</h3><p>'+esc(st.p)+'</p><div class="tb"><button type="button" class="ghost" data-tour="skip">'+(last?"Fermer":"Passer")+'</button><div>'+(i>0?'<button type="button" data-tour="prev">Précédent</button>':'')+'<button type="button" class="pri" data-tour="next">'+(last?"Terminer":"Suivant")+'</button></div></div>';
+  setTimeout(()=>{if(tourI!==i)return;let el=st.sel?document.querySelector(st.sel):null;
+    if(el&&el.closest("[hidden]"))el=null;
+    if(el){const tgt=el.closest(".fld")||el;tgt.classList.add("tour-hl");const y=tgt.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}
+    else window.scrollTo({top:0,behavior:"smooth"});},120);
+}
+function bindTour(){
+  $("h-guide").addEventListener("click",()=>tourShow(0));
+  document.addEventListener("keydown",e=>{if(tourI>=0&&e.key==="Escape")tourEnd();});
+  if(tourSeen())return;
+  const iv=setInterval(()=>{if(ready&&$("lock").hidden){clearInterval(iv);if(tourI<0&&!tourSeen())tourShow(0);}},500);
+}
 bindSettings();bindConseils();bindProjets();bindJournal();bindAvis();route();renderAll();
 $("f-avis").requestSubmit();
-bindLock();bindBackup();bindBio();bindScan();start();
+bindLock();bindBackup();bindBio();bindScan();bindTour();start();
 })();
 </script>
 
