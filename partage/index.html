@@ -312,6 +312,12 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
       <button class="pri" type="submit" id="u-btn">Déverrouiller</button>
       <button type="button" id="u-bio" hidden>Déverrouiller avec Face ID ou empreinte</button>
       <p class="err" id="u-err" aria-live="polite"></p>
+      <div id="u-dev-w" hidden class="note" style="text-align:left;display:flex;flex-direction:column;gap:8px">
+        <b>Ouvrir sans le mot de passe</b>
+        <span class="small">Ouvrez l'application avec ce qui déverrouille votre téléphone : empreinte, visage, code ou schéma.</span>
+        <button type="button" class="pri" id="u-dev">Déverrouiller avec mon téléphone</button>
+        <p class="small" id="u-dev-msg" aria-live="polite" style="margin:0"></p>
+      </div>
       <button type="button" class="linkbtn" id="u-forgot">Mot de passe oublié ?</button>
       <div id="u-reset" hidden class="note" style="text-align:left;display:flex;flex-direction:column;gap:8px">
         <p>Vos données sont chiffrées avec ce mot de passe : sans lui, personne ne peut les relire, pas même Claude. La seule issue est de tout effacer et de repartir des chiffres de départ.</p>
@@ -640,6 +646,7 @@ a.ctop.lk{flex-direction:row!important;text-align:left}
         </div>
         <div id="sec-on" hidden>
           <p class="small muted" style="margin-bottom:12px">L'outil se verrouille après 5 minutes sans activité, ou quand vous quittez l'application plus d'une minute.</p>
+          <p class="small" id="sec-secours" style="margin-bottom:12px"></p>
           <div class="actions" style="margin-bottom:14px"><button class="pri" type="button" id="l-now">Verrouiller maintenant</button><button type="button" id="l-off">Désactiver le mot de passe</button></div>
           <form class="f" id="f-lock-chg">
             <div class="fld"><label for="l-new1">Nouveau mot de passe</label><input id="l-new1" type="password" autocomplete="new-password" minlength="8" required></div>
@@ -1117,7 +1124,7 @@ async function onJournal(list){
 function showLock(mode,msg){
   $("lock").hidden=false;
   if(mode==="loading"){$("lock-t").textContent="Ouverture sécurisée…";$("lock-sub").textContent=msg||"Chargement de vos données.";$("f-unlock").hidden=true;}
-  else{$("lock-t").textContent="Budget verrouillé";$("lock-sub").textContent="Entrez votre mot de passe pour ouvrir vos comptes.";$("f-unlock").hidden=false;$("u-err").textContent=msg||"";$("u-pw").value="";$("u-reset").hidden=true;$("u-bio").hidden=!(bioOK()&&bioCred());setTimeout(()=>$("u-pw").focus(),50);}
+  else{$("lock-t").textContent="Budget verrouillé";$("lock-sub").textContent="Entrez votre mot de passe pour ouvrir vos comptes.";$("f-unlock").hidden=false;$("u-err").textContent=msg||"";$("u-pw").value="";$("u-reset").hidden=true;$("u-bio").hidden=!(bioOK()&&bioCred());$("u-dev-msg").textContent="";devShow();setTimeout(()=>$("u-pw").focus(),50);}
 }
 function hideLock(){$("lock").hidden=true;}
 async function loadAll(){
@@ -1137,12 +1144,13 @@ async function start(){
   if(LOCK){showLock("unlock");return;}
   try{await loadAll();}catch(e){showLock("loading","Impossible de charger vos données. Vérifiez votre connexion puis rouvrez l'outil.");}
 }
-let fails=0,waitUntil=0;
+let fails=(()=>{try{return +localStorage.getItem("mbp-fails")||0;}catch(e){return 0;}})(),waitUntil=0;
+function setFails(n){fails=n;try{n?localStorage.setItem("mbp-fails",String(n)):localStorage.removeItem("mbp-fails");}catch(e){}devShow();}
 async function unlock(pw){
   if(Date.now()<waitUntil){$("u-err").textContent="Trop d'essais. Patientez "+Math.ceil((waitUntil-Date.now())/1000)+" s.";return;}
   $("u-btn").disabled=true;$("u-err").textContent="Vérification…";
-  try{const k=await deriveKey(pw,LOCK.salt,LOCK.iter);await unseal(LOCK.check,k);KEY=k;fails=0;$("u-err").textContent="";await loadAll();}
-  catch(e){fails++;if(fails>=5){waitUntil=Date.now()+30000*Math.pow(2,fails-5);}$("u-err").textContent="Mot de passe incorrect.";}
+  try{const k=await deriveKey(pw,LOCK.salt,LOCK.iter);await unseal(LOCK.check,k);KEY=k;setFails(0);$("u-err").textContent="";secoursSave();await loadAll();}
+  catch(e){setFails(fails+1);if(fails>=5){waitUntil=Date.now()+30000*Math.pow(2,Math.min(fails-5,4));}$("u-err").textContent=fails>=5?"Mot de passe incorrect ("+fails+" essais).":"Mot de passe incorrect."+(fails>=3?" Encore "+(5-fails)+" essai"+(5-fails>1?"s":"")+" avant de pouvoir utiliser le verrouillage du téléphone.":"");}
   $("u-btn").disabled=false;
 }
 function lockNow(){
@@ -1164,6 +1172,7 @@ async function rekey(newKey,newLock){
   await backend.setEtat(await pack(S));
   for(const x of docs)await backend.setJ(x.id,await pack(x.d));
   for(const o of autres){if(o.et)await o.b.setEtat(await pack(o.et));for(const x of o.docs)await o.b.setJ(x.id,await pack(x.d));}
+  await secoursSave();
 }
 async function newLockFor(pw){const salt=b64(crypto.getRandomValues(new Uint8Array(16)));const iter=250000;const k=await deriveKey(pw,salt,iter);return{k,lock:{salt,iter,check:await seal({ok:"bka"},k),v:1}};}
 let lastAct=Date.now(),hiddenAt=0;
@@ -1171,7 +1180,7 @@ function bindLock(){
   $("f-unlock").addEventListener("submit",e=>{e.preventDefault();const pw=$("u-pw").value;if(pw)unlock(pw);});
   $("u-forgot").onclick=()=>{$("u-reset").hidden=false;};
   $("u-reset-btn").onclick=async()=>{if($("u-reset-txt").value.trim().toUpperCase()!=="EFFACER"){$("u-err").textContent="Tapez EFFACER pour confirmer.";return;}
-    try{if(bioOK())await bioDisable();for(const w of PF.list){if(w.id===PF.cur)continue;try{await pfWipe(w.id);}catch(e){}}if(PF.cur!=="main"){try{await pfWipe(PF.cur);}catch(e){}backend=makeBackend("main");}PF={list:[{id:"main",nom:"Principal"}],cur:"main"};try{await backend.setMeta(PF);}catch(e){}const l=await backend.listJ();for(const x of l)await backend.delJ(x.id);await backend.setLock(null);LOCK=null;KEY=null;S=defaults();ready=true;await backend.setEtat(plain(S));$("u-reset-txt").value="";await loadAll();}catch(e){$("u-err").textContent="L'effacement a échoué. Vérifiez votre connexion.";}};
+    try{if(bioOK()){await bioDisable();await secoursDrop();}setFails(0);for(const w of PF.list){if(w.id===PF.cur)continue;try{await pfWipe(w.id);}catch(e){}}if(PF.cur!=="main"){try{await pfWipe(PF.cur);}catch(e){}backend=makeBackend("main");}PF={list:[{id:"main",nom:"Principal"}],cur:"main"};try{await backend.setMeta(PF);}catch(e){}const l=await backend.listJ();for(const x of l)await backend.delJ(x.id);await backend.setLock(null);LOCK=null;KEY=null;S=defaults();ready=true;await backend.setEtat(plain(S));$("u-reset-txt").value="";await loadAll();}catch(e){$("u-err").textContent="L'effacement a échoué. Vérifiez votre connexion.";}};
   const msg=(t,ok)=>{$("l-msg").textContent=t;$("l-msg").style.color=ok?"var(--ok)":"var(--crit)";};
   $("f-lock-on").addEventListener("submit",async e=>{e.preventDefault();const a=$("l-pw1").value,b=$("l-pw2").value;
     if(a.length<8)return msg("Le mot de passe doit faire au moins 8 caractères.");if(a!==b)return msg("Les deux mots de passe ne correspondent pas.");
@@ -1336,6 +1345,39 @@ function bindBackup(){
     try{await importData(t,$("x-pw").value);$("x-txt").value="";$("x-pw").value="";msg("Données importées.",true);}
     catch(err){msg(err.message==="pw"?"Cette copie est chiffrée : indiquez son mot de passe.":err.name==="OperationError"?"Mot de passe de la copie incorrect.":"Ces données ne sont pas reconnues.");}});
 }
+// ---------- secours : verrouillage du téléphone après 5 erreurs ----------
+// La clé de chiffrement (non exportable) est gardée sur ce téléphone après chaque ouverture réussie.
+// Elle n'est rendue qu'après une vérification par le verrouillage de l'appareil (empreinte, visage, code ou schéma).
+async function secoursSave(){if(!bioOK())return;try{if(LOCK&&KEY)await idbDo("readwrite",st=>st.put(KEY,"secours"));else await secoursDrop();}catch(e){}renderSecours();}
+async function secoursDrop(){try{await idbDo("readwrite",st=>st.delete("secours"));}catch(e){}try{localStorage.removeItem("mbp-dev");}catch(e){}}
+async function secoursKey(){try{return (await idbDo("readonly",st=>st.get("secours")))||(await idbDo("readonly",st=>st.get("key")))||null;}catch(e){return null;}}
+function devShow(){const w=$("u-dev-w");if(w)w.hidden=!(LOCK&&fails>=5);}
+function uvOK(ad){try{const f=new Uint8Array(ad)[32];return (f&4)===4;}catch(e){return true;}}
+async function devVerify(){
+  const ids=[];try{const a=localStorage.getItem("mbp-dev"),b=bioCred();if(a)ids.push(a);if(b&&b!==a)ids.push(b);}catch(e){}
+  if(ids.length){try{const r=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:ids.map(i=>({type:"public-key",id:ub64(i)})),userVerification:"required",timeout:60000}});
+      if(!uvOK(r.response.authenticatorData))throw new Error("uv");return true;}catch(e){if(!e||e.name!=="NotAllowedError")throw e;/* identifiant effacé ou refusé : on en crée un nouveau */}}
+  const c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:document.title||"Budget"},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"budget",displayName:"Mon budget"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000}});
+  if(c.response.getAuthenticatorData&&!uvOK(c.response.getAuthenticatorData()))throw new Error("uv");
+  try{localStorage.setItem("mbp-dev",b64(c.rawId));}catch(e){}return true;}
+async function devUnlock(){
+  const m=$("u-dev-msg");const say=(t,ok)=>{m.textContent=t;m.style.color=ok?"var(--ok)":"var(--crit)";};
+  if(!LOCK)return;
+  if(!bioOK())return say(window.claude?"Ce déverrouillage fonctionne seulement dans l'application installée sur le téléphone (l'icône). Ici, il faut le mot de passe.":"Ce navigateur ne permet pas d'utiliser le verrouillage du téléphone. Ouvrez l'application depuis son icône avec Chrome ou Safari à jour.");
+  const k=await secoursKey();
+  if(!k)return say("Ce téléphone n'a pas encore gardé la clé de secours : elle est enregistrée à la première ouverture réussie avec le mot de passe. Sans le mot de passe, il reste « Mot de passe oublié » : tout effacer puis restaurer une sauvegarde.");
+  try{await unseal(LOCK.check,k);}catch(e){await secoursDrop();return say("La clé gardée sur ce téléphone ne correspond plus au mot de passe actuel (il a été changé sur un autre appareil). Il faut le mot de passe, ou « Mot de passe oublié ».");}
+  $("u-dev").disabled=true;say("Confirmez avec votre empreinte, votre visage, votre code ou votre schéma…",true);
+  try{await devVerify();}
+  catch(e){$("u-dev").disabled=false;
+    return say(e&&e.name==="NotAllowedError"?"Vérification annulée ou refusée. Réessayez. Si rien ne s'affiche, activez un verrouillage d'écran (empreinte, code ou schéma) dans les réglages du téléphone.":
+      e&&e.name==="NotSupportedError"?"Ce téléphone ne propose pas de verrouillage compatible. Activez un verrouillage d'écran (empreinte, code ou schéma) dans les réglages du téléphone, puis réessayez.":
+      "Le téléphone n'a pas confirmé votre identité. Réessayez, ou utilisez le mot de passe.");}
+  $("u-dev").disabled=false;KEY=k;setFails(0);waitUntil=0;m.textContent="";
+  await loadAll();
+  setTimeout(()=>{try{showToast("Ouvert avec votre téléphone. Pensez à choisir un nouveau mot de passe dans Réglages.");}catch(e){}},300);}
+function renderSecours(){const el=$("sec-secours");if(!el)return;if(!LOCK||!bioOK()){el.textContent="";return;}
+  secoursKey().then(k=>{el.innerHTML=k?"<b>Secours activé :</b> si le mot de passe est saisi 5 fois de travers, l'application peut s'ouvrir avec l'empreinte, le visage, le code ou le schéma de ce téléphone.":"Secours : il sera activé à la prochaine ouverture avec le mot de passe.";});}
 // ---------- biométrie (application autonome uniquement) ----------
 const bioOK=()=>!window.claude&&!!window.PublicKeyCredential&&!!window.indexedDB;
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("mbp",1);r.onupgradeneeded=()=>r.result.createObjectStore("k");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
@@ -1352,16 +1394,16 @@ async function bioUnlock(){
   $("u-err").textContent="";
   try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:"public-key",id:ub64(id)}],userVerification:"required",timeout:60000}});
     const k=await idbDo("readonly",st=>st.get("key"));if(!k)throw new Error("nokey");
-    await unseal(LOCK.check,k);KEY=k;await loadAll();}
+    await unseal(LOCK.check,k);KEY=k;setFails(0);secoursSave();await loadAll();}
   catch(e){$("u-err").textContent=e&&e.message==="nokey"?"Face ID n'est plus configuré : utilisez le mot de passe.":"Déverrouillage biométrique annulé ou refusé. Utilisez le mot de passe.";}
 }
 function bindBio(){
-  $("u-bio").onclick=bioUnlock;
+  $("u-bio").onclick=bioUnlock;$("u-dev").onclick=devUnlock;
   $("bio-on").onclick=async()=>{const m=$("l-msg");try{await bioEnable();m.style.color="var(--ok)";m.textContent="Face ID ou empreinte activé.";}catch(e){m.style.color="var(--crit)";m.textContent="Activation impossible sur cet appareil ou annulée.";}renderSecurity();};
   $("bio-off").onclick=async()=>{await bioDisable();renderSecurity();};
 }
 function renderSecurity(){renderEngine();const ic=$("ia-chip");if(ic){ic.textContent=S.cleApi?"Clé API enregistrée":"Lecture sur le téléphone";ic.className="chip "+(S.cleApi?"ok":"info");}
-const on=!!LOCK;$("sec-off").hidden=on;$("sec-on").hidden=!on;const bw=$("bio-wrap");bw.hidden=!(on&&bioOK());$("bio-on").hidden=!!bioCred();$("bio-off").hidden=!bioCred();$("u-bio").hidden=!(bioOK()&&bioCred());const ch=$("sec-chip");ch.textContent=on?"Mot de passe actif":"Sans mot de passe";ch.className="chip "+(on?"ok":"warn");}
+const on=!!LOCK;$("sec-off").hidden=on;$("sec-on").hidden=!on;const bw=$("bio-wrap");bw.hidden=!(on&&bioOK());$("bio-on").hidden=!!bioCred();$("bio-off").hidden=!bioCred();$("u-bio").hidden=!(bioOK()&&bioCred());renderSecours();const ch=$("sec-chip");ch.textContent=on?"Mot de passe actif":"Sans mot de passe";ch.className="chip "+(on?"ok":"warn");}
 
 // ---------- événements ----------
 function bindSettings(){
